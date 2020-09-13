@@ -1,14 +1,13 @@
 import os
 import re
+import secrets
 import time
 import numpy as np
 import base64 as b64
 from collections import Counter
 from scipy.stats import chisquare
-from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 from cryptography.hazmat.backends import default_backend
-import secrets
-import json
+from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 
 
 def import_data(file_name):
@@ -25,28 +24,37 @@ def decode(byte_array):
     return byte_array.decode("utf-8")
 
 
-def single_char_xor(byte_array, char):
-    return b"".join([bytes([byte ^ char]) for byte in byte_array])
+def bytes_xor(a, b):
+    return bytes(a_byte ^ b_byte for a_byte, b_byte in zip(a, b))
 
 
-def repeating_key_xor(cipher_bytes, key_bytes):
-    def ith_xor(byte, i):
-        return byte ^ key_bytes[i % len(key_bytes)]
-
-    return bytes([ith_xor(byte, i) for i, byte in enumerate(cipher_bytes)])
+def single_byte_xor(byte, byte_array):
+    return bytes_xor(byte_array, byte * len(byte_array))
 
 
-def bytearray_xor(byte_array_1, byte_array_2):
-    iterator = zip(byte_array_1, byte_array_2)
-    return b"".join(bytes([byte_1 ^ byte_2]) for byte_1, byte_2 in iterator)
+def single_byte_xor_breaker(byte_array):
+    def attempt_crack():
+        for char in range(256):
+            byte = bytes([char])
+            score = text_scorer(single_byte_xor(byte, byte_array))
+            yield score, byte
+
+    return max(attempt_crack())
+
+
+def repeating_key_xor(cipher, key):
+    def ith_xor(i, byte):
+        return byte ^ key[i % len(key)]
+
+    return bytes([ith_xor(i, byte) for i, byte in enumerate(cipher)])
 
 
 def edit_distance(bytes_1, bytes_2):
-    tally = [bin(byte).count("1") for byte in bytearray_xor(bytes_1, bytes_2)]
+    tally = [bin(byte).count("1") for byte in bytes_xor(bytes_1, bytes_2)]
     return sum(tally)
 
 
-def plaintext_scorer(byte_array_sentence):
+def text_scorer(byte_array_sentence):
 
     # ---Prescreen---
     letter_count = 0
@@ -122,24 +130,15 @@ def plaintext_scorer(byte_array_sentence):
     return chisquare(observed_frequencies, f_exp=expected_frequencies)[1]
 
 
-def single_char_xor_breaker(byte_array):
-    def attempt_crack():
-        for char in range(256):
-            score = plaintext_scorer(single_char_xor(byte_array, char))
-            yield score, char
-
-    return max(attempt_crack())
-
-
-def find_key_length(max_length, samples, data):
+def find_key_size(max_size, samples, data):
 
     normalised_edit_distance = np.zeros([samples])
     results = []
 
-    for keysize in range(1, max_length):
+    for keysize in range(1, max_size):
         for pair in range(samples):
 
-            # Take adjacent keysize length blocks.
+            # Take adjacent keysize size blocks.
             cipher = data[(2 * pair) * keysize:(2 * pair + 1) * keysize]
             key = data[(2 * pair + 1) * keysize:(2 * pair + 2) * keysize]
 
@@ -152,40 +151,40 @@ def find_key_length(max_length, samples, data):
     return [row[1] for row in sorted(results)]
 
 
-def key_finder(key_length, data):
+def key_finder(key_size, data):
 
-    # Create list of rectangular length using key_length.
-    lower_multiple = len(data) - (len(data) % key_length)
+    # Create list of rectangular size using key_size.
+    lower_multiple = len(data) - (len(data) % key_size)
     data_array = np.frombuffer(data, dtype="uint8")[0:lower_multiple]
 
-    # Reshape to key_length length rows and transpose.
-    data_array = data_array.reshape(-1, key_length)
+    # Reshape to key_size size rows and transpose.
+    data_array = data_array.reshape(-1, key_size)
     output_list = [bytes(row.tolist()) for row in data_array.T]
 
-    # Return most promising key of key_length length.
-    return bytes([single_char_xor_breaker(item)[1] for item in output_list])
+    # Return most promising key of key_size size.
+    return b"".join([single_byte_xor_breaker(item)[1] for item in output_list])
 
 
-def pad(chunk_length, data, multiples_allowed):
-    #PKCS#7 padding
+def pad(block_size, data, multiples_allowed):
+    # PKCS#7 padding.
     if multiples_allowed == True:
-        if (len(data) % chunk_length) != 0:
-            pad_length = chunk_length - len(data) % chunk_length
-            data += bytes([pad_length]) * pad_length
+        if (len(data) % block_size) != 0:
+            pad_size = block_size - len(data) % block_size
+            data += bytes([pad_size]) * pad_size
         else:
-            data += bytes([chunk_length]) * chunk_length
+            data += bytes([block_size]) * block_size
     else:
-        difference = chunk_length - len(data)
+        difference = block_size - len(data)
         data += bytes([difference]) * difference
     return data
 
 
 def depad(data):
-    #PKCS#7 depadding
-    pad_length = data[-1]
-    if data[-pad_length:] != bytes([pad_length]) * pad_length:
+    # PKCS#7 depadding.
+    pad_size = data[-1]
+    if data[-pad_size:] != bytes([pad_size]) * pad_size:
         raise Exception("Bad padding encountered")
-    return data[0:-pad_length]
+    return data[0:-pad_size]
 
 
 def ECB(mode, key, data):
@@ -207,13 +206,13 @@ def CBC(mode, iv, key, data):
     output_message = b""
     if mode == "encrypt":
         for block in input_message:
-            step_1 = bytearray_xor(iv, block)
+            step_1 = bytes_xor(iv, block)
             iv = ECB("encrypt", key, step_1)
             output_message += iv
     else:
         for block in input_message:
             step_1 = ECB("decrypt", key, block)
-            output_message += bytearray_xor(iv, step_1)
+            output_message += bytes_xor(iv, step_1)
             iv = block
     return (output_message)
 
@@ -247,11 +246,6 @@ def parse_profile(email):
     return encode(f"email={email}&uid=10&role=user")
 
 
-def buffer_creator(position, append, keylength):
-    #create buffers of length 15
-    return (b"0" * (keylength - position - 1) + append)
-
-
 def encryption_oracle(data):
     data = secrets.token_bytes(
         secrets.randbelow(5)) + data + secrets.token_bytes(
@@ -267,6 +261,16 @@ def encryption_oracle(data):
     return result, mode
 
 
+class ECB_oracle_C8:
+    def __init__(self):
+        self.key = secrets.token_bytes(16)
+        self.secret = b64.b64decode(import_data("data_S2C12.txt"))
+
+    def encrypt(self, bytes_to_append):
+        data = pad(16, self.secret + bytes_to_append, multiples_allowed=True)
+        return ECB("encrypt", self.key, data)
+
+
 def ECB_oracle(data):
     ECB_oracle.key = getattr(ECB_oracle, 'key', secrets.token_bytes(16))
     data += b64.b64decode(import_data("data_S2C12.txt"))
@@ -280,7 +284,28 @@ def ECB_mode_check(data):
     return True if 0 < duplicate_blocks else False
 
 
-class set_1():
+def ECB_mode_check_2(oracle):
+    data = oracle.encrypt(b"0" * 50)
+    blocks = np.frombuffer(data, dtype="uint8").reshape(-1, 16)
+    duplicate_blocks = len(blocks) - len(np.unique(blocks, axis=0))
+    return True if 0 < duplicate_blocks else False
+
+
+def find_block_size(oracle):
+    # Encrypt increasingly long byte strings until output changes size.
+    # Record change in size of output.
+    initial_output_size = len(oracle.encrypt(b""))
+    output_size = initial_output_size
+    bytestring = b""
+    while output_size == initial_output_size:
+        bytestring += b"0"
+        output_size = len(oracle.encrypt(bytestring))
+        if 100 < len(bytestring):
+            raise Exception("Indeterminable block size")
+    return output_size - initial_output_size
+
+
+class set_1:
     def challenge_1(self):
         print("\n-- Challenge 1 - Convert hex to base 64 --")
 
@@ -290,29 +315,24 @@ class set_1():
         data = bytes.fromhex(hex_ciphertext)
         B64_encode = b64.b64encode(data)
 
-        print(f"Hex ciphertext      : {hex_ciphertext}")
-        print(f"Step 1              : Hex decode")
-        print(f"Decrypted plaintext : {decode(data)}")
-        print(f"Base 64 encode      : {decode(B64_encode)}")
+        print(f"Hex ciphertext : {hex_ciphertext}")
+        print(f"Plaintext      : {decode(data)}")
+        print(f"Base 64 encode : {decode(B64_encode)}")
 
     def challenge_2(self):
-        # Take two equal-length buffers and produce their XOR combination.
+        # Take two equal-size buffers and produce their XOR combination.
         print("\n-- Challenge 2 - Fixed XOR --")
 
         hex_ciphertext = "1c0111001f010100061a024b53535009181c"
         hex_key = "686974207468652062756c6c277320657965"
-
         data = bytes.fromhex(hex_ciphertext)
         key = bytes.fromhex(hex_key)
+        decrypted_data = bytes_xor(data, key)
 
-        decrypted_data = bytearray_xor(data, key)
-
-        print(f"Hex ciphertext      : {hex_ciphertext}")
-        print(f"Hex key             : {hex_key}")
-        print(f"Step 1              : Hex decode")
-        print(f"Step 2              : XOR decrypt")
-        print(f"Decrypted plaintext : {decode(decrypted_data)}")
-        print(f"Hex encode          : {decrypted_data.hex()}")
+        print(f"Hex ciphertext          : {hex_ciphertext}")
+        print(f"Hex key                 : {hex_key}")
+        print(f"XOR decrypted plaintext : {decode(decrypted_data)}")
+        print(f"Hex encode              : {decrypted_data.hex()}")
 
     def challenge_3(self):
         print("\n-- Challenge 3 - Single-byte XOR cipher --")
@@ -321,15 +341,13 @@ class set_1():
             "1b37373331363f78151b7f2b783431333d78397828372d363c7837"
             "3e783a393b3736")
         data = bytes.fromhex(hex_ciphertext)
-        score, char = single_char_xor_breaker(data)
+        score, byte = single_byte_xor_breaker(data)
+        plaintext = single_byte_xor(byte, data)
 
-        print(f"Hex ciphertext      : {hex_ciphertext}")
-        print(f"Step 1              : Hex decode")
-        print(f"Step 2              : XOR data against every char and score "
-              "outcomes based on char frequency analysis")
-        print(f"Highest score found : {score}")
-        print(f"Corresponding Key   : {char} - {chr(char)}")
-        print(f"Decrypted plaintext : {decode(single_char_xor(data, char))}")
+        print(f"Hex ciphertext                   : {hex_ciphertext}")
+        print(f"Highest frequency analysis score : {score}")
+        print(f"Corresponding Key                : {decode(byte)}")
+        print(f"Decrypted plaintext              : {decode(plaintext)}")
 
     def challenge_4(self):
         print("\n-- Challenge 4 - Detect single-char XOR --")
@@ -340,20 +358,17 @@ class set_1():
         def text_breaker():
             for line_index, line in enumerate(hex_ciphertext.splitlines()):
                 data = bytes.fromhex(line)
-                score, char = single_char_xor_breaker(data)
-                yield score, char, line_index, data
+                score, byte = single_byte_xor_breaker(data)
+                yield score, byte, line_index, data
 
-        score, char, line_index, data = max(text_breaker())
+        score, byte, line_index, data = max(text_breaker())
+        plaintext = single_byte_xor(byte, data)
 
-        print(f"Hex data file       : {file_name}")
-        print(f"Step 1              : Hex decode")
-        print(f"Step 2              : XOR line of data against every char and"
-              " score outcomes based on char frequency analysis")
-        print(f"Step 3              : Repeat for every line")
-        print(f"Highest score found : {score}")
-        print(f"Corresponding line  : {line_index}")
-        print(f"Corresponding key   : {char} - {chr(char)}")
-        print(f"Decrypted plaintext : {decode(single_char_xor(data, char))}")
+        print(f"Hex data file                    : {file_name}")
+        print(f"Highest frequency analysis score : {score}")
+        print(f"Corresponding line               : {line_index}")
+        print(f"Corresponding key                : {decode(byte)}")
+        print(f"Decrypted plaintext              : {decode(plaintext)}")
 
     def challenge_5(self):
         print("\n-- Challenge 5 - Implement repeating-key XOR --")
@@ -362,46 +377,42 @@ class set_1():
                   "I go crazy when I hear a cymbal")
         key = encode("ICE")
         data = encode(stanza)
+        cyphertext = repeating_key_xor(data, key)
 
-        print(f"Key                    : {key}")
-        print(f"Plaintext              : \n{stanza}")
-        print(f"Step 1                 : UTF-8 encode key and plaintext")
-        print(f"Step 2                 : Encrypt with repeating key XOR")
-        print(f"Hex encoded ciphertext: {repeating_key_xor(data, key).hex()}")
+        print(f"Key                                : {key}")
+        print(f"Plaintext                          : \n{stanza}")
+        print(f"Repeating key encrypt (hex encode) : {cyphertext.hex()}")
 
     def challenge_6(self):
         print(f"\n-- Challenge 6 - Break repeating-key XOR --")
         print(f"-- Part 1 --")
 
-        string_1_data = encode("this is a test")
-        string_2_data = encode("wokka wokka!!!")
-        edit_dist = edit_distance(string_1_data, string_2_data)
+        data_1 = encode("this is a test")
+        data_2 = encode("wokka wokka!!!")
 
-        print(f"String 1      : {decode(string_1_data)}")
-        print(f"String 2      : {decode(string_2_data)}")
-        print(f"Step 1        : UTF-8 encode strings")
-        print(f"Step 2        : XOR bytes and count set bits")
-        print(f"Edit Distance : {edit_dist}")
+        print(f"String 1      : {decode(data_1)}")
+        print(f"String 2      : {decode(data_2)}")
+        print(f"Edit distance : {edit_distance(data_1, data_2)}")
         print(f"-- Part 2 --")
 
         B64_ciphertext = import_data("data_S1C6.txt")
         data = b64.b64decode(B64_ciphertext)
-        likely_key_lengths = find_key_length(40, 10, data)
+        likely_key_sizes = find_key_size(40, 10, data)
 
         # Find most likely key.
         def key_comparison():
-            for key_length in likely_key_lengths[0:3]:
-                key = key_finder(key_length, data)
+            for key_size in likely_key_sizes[0:3]:
+                key = key_finder(key_size, data)
                 secret = repeating_key_xor(data, key)
-                score = plaintext_scorer(secret)
+                score = text_scorer(secret)
                 yield score, key, secret
 
         score, key, secret = max(key_comparison())
 
-        print(f"Most likely key lengths : {likely_key_lengths[0:3]}")
-        print(f"Highest score found     : {score}")
-        print(f"Key                     : {decode(key)}")
-        print(f"Secret                  : \n{decode(secret[:200])}...")
+        print(f"Most likely key sizes : {likely_key_sizes[0:3]}")
+        print(f"Highest score         : {score}")
+        print(f"Corresponding Key     : {decode(key)}")
+        print(f"Secret                : \n{decode(secret[:90])}...")
 
     def challenge_7(self):
         print(f"\n-- Challenge 7 - AES in ECB mode --")
@@ -411,7 +422,7 @@ class set_1():
         plaintext = ECB("decrypt", key, data)
 
         print(f"Key    : {decode(key)}")
-        print(f"Secret : \n{decode(plaintext[:200])}...")
+        print(f"Secret : \n{decode(plaintext[:90])}...")
 
     def challenge_8(self):
         print(f"\n-- Challenge 8 - Detect AES in ECB mode --")
@@ -422,33 +433,33 @@ class set_1():
         def text_breaker():
             for line_index, line in enumerate(hex_ciphertext.splitlines()):
                 data = bytes.fromhex(line)
-                discrete_char_instances = len(list(Counter(data).items()))
-                yield discrete_char_instances, line_index
+                unique_char_instances = len(list(Counter(data).items()))
+                yield unique_char_instances, line_index
 
-        discrete_char_instances, line_index = min(text_breaker())
+        unique_char_instances, line_index = min(text_breaker())
         print(
             f"Assume ECB 1:1 mapping has low diversity of characters compared"
             " to random data")
-        print(f"Lowest number of discrete chars : {discrete_char_instances}")
-        print(f"Corresponding line              : {line_index}")
+        print(f"Lowest number of unique chars : {unique_char_instances}")
+        print(f"Corresponding line            : {line_index}")
         print(f"-- Method 2 --")
 
-        #find proportion of unique lines
+        # Find if data contains duplicate lines.
         for line_index2, line in enumerate(hex_ciphertext.splitlines()):
             if ECB_mode_check(bytes.fromhex(line)): break
 
-        print(f"Find line with least duplicate chunks")
-        print(f"Corresponding line              : {line_index2}")
+        print(f"Find line with duplicate blocks")
+        print(f"Corresponding line            : {line_index2}")
 
 
-class set_2():
+class set_2:
     def challenge_9(self):
         print(f"\n-- Challenge 9 - Implement PKCS#7 padding --")
 
         data = encode("YELLOW SUBMARINE")
-        length = 20
-        print(f"{data} padded to {length} bytes using PKCS#7 : "
-              f"{pad(length, data, multiples_allowed=False)}")
+        size = 20
+        print(f"{data} padded to {size} bytes using PKCS#7 : "
+              f"{pad(size, data, multiples_allowed=False)}")
 
     def challenge_10(self):
         print(f"\n-- Challenge 10 - Implement CBC mode --")
@@ -469,53 +480,54 @@ class set_2():
         print(f"ECB encrypted message : {ECB_cyphertext}")
         print(f"ECB decrypted message : {ECB_plaintext}")
         print(f"iv                    : {iv}")
-        print(f"CBC encrypted message : {b64.b64encode(CBC_cyphertext)}")
+        print(f"CBC encrypted message : {CBC_cyphertext}")
         print(f"CBC decrypted message : {CBC_plaintext}")
         print("----- Part 2 ------")
 
-        #-- part 2 --
         data = b64.b64decode(import_data("data_S2C10.txt"))
         key = b"YELLOW SUBMARINE"
         iv = bytes([0]) * 16
 
         decrypted = decode(depad(CBC("decrypt", iv, key, data)))
-        print(f"{decrypted[0:90]}... {decrypted[-90:-1]}")
+        print(f"CBC decrypted message : \n{decrypted[0:90]}...")
 
     def challenge_11(self):
         print(f"\n-- Challenge 11 - An ECB/CBC detection oracle --")
 
-        encryption, mode = encryption_oracle(b"A" * 100)
+        encryption, mode = encryption_oracle(b"0" * 100)
 
-        print(f"Random AES Key generator   : {random_AES_key()}")
-        print(f"Oracle encryption mode used: {mode}")
-        print(f"ECB encrypted data?        : {ECB_mode_check(encryption)}")
+        print(f"Random AES Key generator    : {random_AES_key()}")
+        print(f"Oracle encryption mode used : {mode}")
+        print(f"ECB encrypted data?         : {ECB_mode_check(encryption)}")
 
     def challenge_12(self):
         print(f"\n-- Challenge 12 - "
               "Byte-at-a-time ECB decryption (Simple) --")
 
-        def ecb_keylength_finder():
-            for i in range(66):
-                if (ECB_mode_check(ECB_oracle(b"0" * i))):
-                    break
-            return int(i / 2)
+        oracle = ECB_oracle_C8()
+        block_size = find_block_size(oracle)
 
-        keylength = ecb_keylength_finder()
-        print(f"Calculated keylength for ECB mode : {keylength}")
+        print(f"Determined oracle block size : {block_size}")
+        print(f"Oracle using ECB mode?       : {ECB_mode_check_2(oracle)}")
 
         decryption = b""
-        block_len = len(ECB_oracle(b""))
-        for block_p in range(0, block_len, keylength):
-            start = block_p
-            end = block_p + keylength
+        data_size = len(ECB_oracle(b""))
 
-            for position in range(keylength):
+        # For all blocks in the data.
+        for block_position in range(0, data_size, block_size):
+            block_start = block_position
+            block_end = block_position + block_size
 
-                buffer = buffer_creator(position, decryption, keylength)
-                model = ECB_oracle(b"0" *
-                                   (keylength - position - 1))[start:end]
+            # For all byte positions along the block (15->0).
+            for byte_position in reversed(range(block_size)):
+                buffer = b"0" * byte_position + decryption
+                model_bytes = ECB_oracle(
+                    b"0" * (byte_position))[block_start:block_end]
+
+                # test all possible characters against model_byte
                 for char in range(256):
-                    if model == ECB_oracle(buffer + bytes([char]))[start:end]:
+                    if model_bytes == ECB_oracle(
+                            buffer + bytes([char]))[block_start:block_end]:
                         decryption += bytes([char])
                         break
 
@@ -543,10 +555,10 @@ class set_2():
 
         print(f"Base email        : {base_email}")
         print(f"Encrypted profile : {base_encryption}")
-        print(f"Encrypted length  : {base_encryption_len}")
+        print(f"Encrypted size  : {base_encryption_len}")
         print(f"Decrypted data    : {base_decryption}")
 
-        #create an email that creates a whole new block in output
+        # Create an email that creates a whole new block in output.
         end_align_email = base_email
         end_align_encryption = base_encryption
         while len(end_align_encryption) == base_encryption_len:
@@ -556,9 +568,9 @@ class set_2():
 
         print(f"End aligning email : {end_align_email}")
         print(f"Encrypted profile  : {end_align_encryption}")
-        print(f"Encrypted length   : {end_align_encryption_len}")
+        print(f"Encrypted size   : {end_align_encryption_len}")
 
-        # add bytes to push unwanted data from encryption into end block and crop useful blocks
+        # Add bytes to push unwanted data from encryption into end block and crop useful blocks.
         bytes_to_remove = len(b"user")
         crop_email = ("b" * bytes_to_remove) + end_align_email
         crop = profile_for(crop_email)[0:48]
@@ -567,18 +579,18 @@ class set_2():
         print(f"bytes to push into new block : {bytes_to_remove}")
         print(f"Crop aligning email          : {crop_email}")
         print(f"Encrypted profile crop       : {crop}")
-        print(f"Crop length                  : {len(crop)}")
+        print(f"Crop size                  : {len(crop)}")
         print(f"Decrypted crop               : {decryption}")
 
-        # create an email that shows its position in the encryption
+        # Create an email that shows its position in the encryption.
         position_email = base_email
-        #look for two identical blocks in encryption
+        # Look for two identical blocks in encryption.
         while not ECB_mode_check(profile_for(position_email)):
             position_email = "c" + position_email
 
         print(f"Position finding email : {position_email}")
 
-        #find position at which duplicated block starts changing
+        # Find position at which duplicated block starts changing.
         position = 0
         while ECB_mode_check(profile_for(position_email)):
             position_email_list = list(position_email)
@@ -597,7 +609,7 @@ class set_2():
         print(f"Bytes to add to email : {bytes_to_add}")
         print(f"Email ending block    : {block_end_email}")
 
-        # craft new ending for encrypted data
+        # Craft new ending for encrypted data.
         new_end = decode(pad(16, b"admin", multiples_allowed=True))
         new_end_encryption_email = block_end_email + new_end
         cut = profile_for(new_end_encryption_email)[32:48]
@@ -618,7 +630,7 @@ class set_2():
 
     def challenge_14(self):
         print(f"\n-- Challenge 14 - Byte-at-a-time ECB decryption (Harder) --")
-        #find bytes needed to align end of blocks
+        # Find bytes needed to align end of blocks.
 
     def challenge_15(self):
         print(f"\n-- Challenge 15 - PKCS#7 padding validation --")
