@@ -49,17 +49,17 @@ def repeating_key_xor(cipher, key):
     return bytes([ith_xor(i, byte) for i, byte in enumerate(cipher)])
 
 
-def edit_distance(bytes_1, bytes_2):
-    tally = [bin(byte).count("1") for byte in bytes_xor(bytes_1, bytes_2)]
+def edit_distance(b1, b2):
+    tally = [bin(byte).count("1") for byte in bytes_xor(b1, b2)]
     return sum(tally)
 
 
-def text_scorer(byte_array_sentence):
+def text_scorer(byte_array):
 
     # ---Prescreen---
     letter_count = 0
     abnormal_char_count = 0
-    for char in byte_array_sentence:
+    for char in byte_array:
         # Count alphabet characters.
         if 64 < char < 91 or 96 < char < 123 or char == 32:
             letter_count += 1
@@ -68,8 +68,8 @@ def text_scorer(byte_array_sentence):
         if not (8 < char < 16 or 31 < char < 127):
             abnormal_char_count += 1
 
-    letter_proportion = letter_count / len(byte_array_sentence)
-    abnormal_char_proportion = abnormal_char_count / len(byte_array_sentence)
+    letter_proportion = letter_count / len(byte_array)
+    abnormal_char_proportion = abnormal_char_count / len(byte_array)
 
     # Check string is of low punctuation proportion.
     if letter_proportion < 0.8: return 0
@@ -113,7 +113,7 @@ def text_scorer(byte_array_sentence):
 
     # Make bytearray of only lowercase letters (lowerify uppercase letters).
     alphabet_bytes = bytearray()
-    for byte in byte_array_sentence:
+    for byte in byte_array:
         if 96 < byte < 123: alphabet_bytes.append(byte)
         elif 64 < byte < 91: alphabet_bytes.append(byte + 22)
 
@@ -127,11 +127,11 @@ def text_scorer(byte_array_sentence):
     observed_frequencies = observed_frequencies / np.sum(observed_frequencies)
 
     # Return goodness of fit.
-    return chisquare(observed_frequencies, f_exp=expected_frequencies)[1]
+    return chisquare(observed_frequencies, expected_frequencies)[1]
 
 
-def find_key_size(max_size, samples, data):
-
+def find_key_size(max_size, data):
+    samples = 10
     normalised_edit_distance = np.zeros([samples])
     results = []
 
@@ -185,6 +185,22 @@ def depad(data):
     if data[-pad_size:] != bytes([pad_size]) * pad_size:
         raise Exception("Bad padding encountered")
     return data[0:-pad_size]
+
+
+class ECB_new:
+    def encrypt(self, key, data):
+        cipher = Cipher(algorithms.AES(key),
+                        modes.ECB(),
+                        backend=default_backend())
+        encryptor = cipher.encryptor()
+        return encryptor.update(data) + encryptor.finalize()
+
+    def decrypt(self, key, data):
+        cipher = Cipher(algorithms.AES(key),
+                        modes.ECB(),
+                        backend=default_backend())
+        decryptor = cipher.decryptor()
+        return decryptor.update(data) + decryptor.finalize()
 
 
 def ECB(mode, key, data):
@@ -246,36 +262,30 @@ def parse_profile(email):
     return encode(f"email={email}&uid=10&role=user")
 
 
-def encryption_oracle(data):
-    data = secrets.token_bytes(
-        secrets.randbelow(5)) + data + secrets.token_bytes(
-            secrets.randbelow(5))
-    data_p = pad(16, data, multiples_allowed=True)
-    if secrets.choice([True, False]):
-        mode = "ECB"
-        result = ECB("encrypt", random_AES_key(), data_p)
-    else:
-        mode = "CBC"
-        result = CBC("encrypt", secrets.token_bytes(16), random_AES_key(),
-                     data_p)
-    return result, mode
+class ECB_oracle_C11:
+    def encrypt(self, data):
+        data = secrets.token_bytes(
+            secrets.randbelow(5)) + data + secrets.token_bytes(
+                secrets.randbelow(5))
+        data_p = pad(16, data, multiples_allowed=True)
+        if secrets.choice([True, False]):
+            mode = "ECB"
+            result = ECB_new().encrypt(random_AES_key(), data_p)
+        else:
+            mode = "CBC"
+            result = CBC("encrypt", secrets.token_bytes(16), random_AES_key(),
+                         data_p)
+        return result, mode
 
 
-class ECB_oracle_C8:
+class ECB_oracle_C12:
     def __init__(self):
         self.key = secrets.token_bytes(16)
         self.secret = b64.b64decode(import_data("data_S2C12.txt"))
 
-    def encrypt(self, bytes_to_append):
-        data = pad(16, self.secret + bytes_to_append, multiples_allowed=True)
-        return ECB("encrypt", self.key, data)
-
-
-def ECB_oracle(data):
-    ECB_oracle.key = getattr(ECB_oracle, 'key', secrets.token_bytes(16))
-    data += b64.b64decode(import_data("data_S2C12.txt"))
-    data = pad(16, data, multiples_allowed=True)
-    return ECB("encrypt", ECB_oracle.key, data)
+    def encrypt(self, bytes_to_prepend):
+        data = pad(16, bytes_to_prepend + self.secret, multiples_allowed=True)
+        return ECB_new().encrypt(self.key, data)
 
 
 def ECB_mode_check(data):
@@ -397,7 +407,7 @@ class set_1:
 
         B64_ciphertext = import_data("data_S1C6.txt")
         data = b64.b64decode(B64_ciphertext)
-        likely_key_sizes = find_key_size(40, 10, data)
+        likely_key_sizes = find_key_size(40, data)
 
         # Find most likely key.
         def key_comparison():
@@ -419,7 +429,7 @@ class set_1:
 
         key = encode("YELLOW SUBMARINE")
         data = b64.b64decode(import_data("data_S1C7.txt"))
-        plaintext = ECB("decrypt", key, data)
+        plaintext = ECB_new().decrypt(key, data)
 
         print(f"Key    : {decode(key)}")
         print(f"Secret : \n{decode(plaintext[:90])}...")
@@ -470,8 +480,8 @@ class set_2:
         key = pad(16, b"PASSWORD", multiples_allowed=False)
         iv = pad(16, b"12345", multiples_allowed=False)
 
-        ECB_cyphertext = ECB("encrypt", key, data_p)
-        ECB_plaintext = depad(ECB("decrypt", key, ECB_cyphertext))
+        ECB_cyphertext = ECB_new().encrypt(key, data_p)
+        ECB_plaintext = depad(ECB_new().decrypt(key, ECB_cyphertext))
         CBC_cyphertext = CBC("encrypt", iv, key, data_p)
         CBC_plaintext = depad(CBC("decrypt", iv, key, CBC_cyphertext))
 
@@ -494,7 +504,8 @@ class set_2:
     def challenge_11(self):
         print(f"\n-- Challenge 11 - An ECB/CBC detection oracle --")
 
-        encryption, mode = encryption_oracle(b"0" * 100)
+        oracle = ECB_oracle_C11()
+        encryption, mode = oracle.encrypt(b"0" * 100)
 
         print(f"Random AES Key generator    : {random_AES_key()}")
         print(f"Oracle encryption mode used : {mode}")
@@ -504,14 +515,14 @@ class set_2:
         print(f"\n-- Challenge 12 - "
               "Byte-at-a-time ECB decryption (Simple) --")
 
-        oracle = ECB_oracle_C8()
+        oracle = ECB_oracle_C12()
         block_size = find_block_size(oracle)
 
         print(f"Determined oracle block size : {block_size}")
         print(f"Oracle using ECB mode?       : {ECB_mode_check_2(oracle)}")
 
         decryption = b""
-        data_size = len(ECB_oracle(b""))
+        data_size = len(oracle.encrypt(b""))
 
         # For all blocks in the data.
         for block_position in range(0, data_size, block_size):
@@ -521,14 +532,15 @@ class set_2:
             # For all byte positions along the block (15->0).
             for byte_position in reversed(range(block_size)):
                 buffer = b"0" * byte_position + decryption
-                model_bytes = ECB_oracle(
+                model_bytes = oracle.encrypt(
                     b"0" * (byte_position))[block_start:block_end]
 
                 # test all possible characters against model_byte
                 for char in range(256):
-                    if model_bytes == ECB_oracle(
-                            buffer + bytes([char]))[block_start:block_end]:
-                        decryption += bytes([char])
+                    byte = bytes([char])
+                    if model_bytes == oracle.encrypt(
+                            buffer + byte)[block_start:block_end]:
+                        decryption += byte
                         break
 
         print(f"Decoded message : \n{decode(depad(decryption))}")
