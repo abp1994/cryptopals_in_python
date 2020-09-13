@@ -7,6 +7,7 @@ from scipy.stats import chisquare
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 from cryptography.hazmat.backends import default_backend
 import secrets
+import json
 
 
 def import_data(file_name):
@@ -181,6 +182,8 @@ def pad(chunk_length, data, multiples_allowed):
 def depad(data):
     #PKCS#7 depadding
     pad_length = data[-1]
+    if data[-pad_length:] != bytes([pad_length]) * pad_length:
+        raise Exception("Bad padding encountered")
     return data[0:-pad_length]
 
 
@@ -435,7 +438,6 @@ class set_2():
         print(f"\n-- Challenge 12 - "
               "Byte-at-a-time ECB decryption (Simple) --")
 
-        #find key length and check mode
         def ecb_keylength_finder():
             for i in range(66):
                 if (ECB_mode_check(ECB_oracle(b"0" * i))):
@@ -445,20 +447,118 @@ class set_2():
         keylength = ecb_keylength_finder()
         print(f"Calculated keylength for ECB mode : {keylength}")
 
-        # find all bytes
+        decryption = b""
+        block_len = len(ECB_oracle(b""))
+        for block_p in range(0, block_len, keylength):
+            start = block_p
+            end = block_p + keylength
 
-        #array = np.frombuffer(data, dtype="uint8").reshape(-1, 16)
+            for position in range(keylength):
 
-        decrypted = b""
-        for n in range(keylength):
-            filler = b"0" * (keylength - n - 1)
-            model_block = ECB_oracle(filler)[0:keylength]
-            for i in range(256):
-                test_input = filler + decrypted + bytes([i])
-                if ECB_oracle(test_input)[0:keylength] == model_block:
-                    decrypted += bytes([i])
-                    break
-        print(decrypted)
+                buffer = buffer_creator(position, decryption, keylength)
+                model = ECB_oracle(b"0" *
+                                   (keylength - position - 1))[start:end]
+                for char in range(256):
+                    if model == ECB_oracle(buffer + bytes([char]))[start:end]:
+                        decryption += bytes([char])
+                        break
+
+        print(f"Decoded message : \n{decode(depad(decryption))}")
+
+    def challenge_13(self):
+        print(f"\n-- Challenge 13 - ECB cut-and-paste --")
+        text = """{"foo": "bar", "bad": "qux", "zap": "zazzle"}"""
+        print(
+            f"Example k=v parse of string : {text} to dictionary : {key_value_creator(text)}"
+        )
+
+        user1 = "user@attack.com"
+        encrypted_user_data = profile_for(user1)
+        decrypted_user_data = profile_decrypt(encrypted_user_data)
+        data_len = len(encrypted_user_data)
+
+        print(f"user : {user1}")
+        print(f"Encrypted user data : {encrypted_user_data}")
+        print(f"Decrypted user data : {decrypted_user_data}")
+        print()
+
+        user2 = user1
+        # create an email with a length that adds a full pad block to output
+        while len(encrypted_user_data) == data_len:
+            user2 = "u" + user2
+            encrypted_user_data = profile_for(user2)
+        print(user2)
+        print(profile_decrypt(profile_for(user2)))
+        print()
+        guessed_ending_format = "'user'}"
+        bytes_to_remove = len(guessed_ending_format)
+        #push bytes to remove into new block
+        user3 = 'u' * (bytes_to_remove) + user2
+        print(user3)
+
+        # cut useful bytes
+        cut1 = profile_for(user3)[0:64]
+        print(cut1)
+
+        #craft new ending for data
+        new_end = """"admin"}"""
+        replacement = decode(pad(16, encode(new_end), multiples_allowed=True))
+        print(replacement)
+        #find replaceable bytes by sending repeating letters
+        print(profile_for(user1))
+        print(profile_for("qwertuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuu" + user1))
+        # so 5 is the alignment
+        # add custom input after 5 bytes
+        replacement = encode(new_end) + bytes([8]) * 8
+
+        profile_new = "qwertuuuuuuuuuuuuuuuu" + decode(replacement)
+        print(encode(profile_new))
+        cut2 = profile_for(profile_new)[32:48]
+        print(profile_decrypt(cut2))
+
+        cypher = cut1 + cut2
+        print(profile_decrypt(cypher))
+
+    def challenge_15(self):
+        print(f"\n-- Challenge 15 - PKCS#7 padding validation --")
+
+        a = b"ICE ICE BABY\x04\x04\x04\x04"
+        b = b"ICE ICE BABY\x05\x05\x05\x05"
+        c = b"ICE ICE BABY\x01\x02\x03\x04"
+
+        for i in [a, b, c]:
+            try:
+                print(f"Depad of {i} : {depad(i)}")
+            except Exception as e:
+                print(f"Depad of {i} : {e}")
+
+
+def profile_for(email):
+    profile = encode(user_profile_encoder(email))
+    data = pad(16, profile, multiples_allowed=True)
+    encrypted_user_data = ECB("encrypt", b"PASSWORDPASSWORD", data)
+    return encrypted_user_data
+
+
+def profile_decrypt(data):
+    decrypted_user_data = ECB("decrypt", b"PASSWORDPASSWORD", data)
+    return decrypted_user_data
+    #return key_value_creator(depad(decrypted_user_data))
+
+
+def key_value_creator(data):
+    return json.loads(data)
+
+
+def user_profile_encoder(email):
+    if 0 < email.count(":") + email.count(","):
+        raise Exception("Invalid character encountered")
+    return f"email={email}&uid={10}&role={"user"}"
+
+
+def buffer_creator(position, append, keylength):
+    #create buffers of length 15
+    return (b"0" * (keylength - position - 1) + append)
 
 
 def encryption_oracle(data):
@@ -505,7 +605,10 @@ def main():
     #set_2().challenge_9()
     #set_2().challenge_10()
     #set_2().challenge_11()
-    set_2().challenge_12()
+    #set_2().challenge_12()
+    set_2().challenge_13()
+    #set_2().challenge_14()
+    #set_2().challenge_15()
 
 
 if __name__ == "__main__":
