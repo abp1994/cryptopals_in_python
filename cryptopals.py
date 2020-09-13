@@ -1,7 +1,7 @@
 import os
 import re
-import secrets
 import time
+import secrets
 import numpy as np
 import base64 as b64
 from collections import Counter
@@ -32,21 +32,21 @@ def single_byte_xor(byte, byte_array):
     return bytes_xor(byte_array, byte * len(byte_array))
 
 
-def single_byte_xor_breaker(byte_array):
+def single_byte_xor_breaker(ciphertext):
     def attempt_crack():
         for char in range(256):
             byte = bytes([char])
-            score = text_scorer(single_byte_xor(byte, byte_array))
+            score = text_scorer(single_byte_xor(byte, ciphertext))
             yield score, byte
 
     return max(attempt_crack())
 
 
-def repeating_key_xor(cipher, key):
-    def ith_xor(i, byte):
-        return byte ^ key[i % len(key)]
+def repeating_key_xor(ciphertext, key):
+    def nth_xor(n, byte):
+        return byte ^ key[n % len(key)]
 
-    return bytes([ith_xor(i, byte) for i, byte in enumerate(cipher)])
+    return bytes([nth_xor(n, byte) for n, byte in enumerate(ciphertext)])
 
 
 def edit_distance(b1, b2):
@@ -139,11 +139,11 @@ def find_key_size(max_size, data):
         for pair in range(samples):
 
             # Take adjacent keysize size blocks.
-            cipher = data[(2 * pair) * keysize:(2 * pair + 1) * keysize]
+            ciphertext = data[(2 * pair) * keysize:(2 * pair + 1) * keysize]
             key = data[(2 * pair + 1) * keysize:(2 * pair + 2) * keysize]
 
             # Calculate normalised edit distance.
-            normalised_edit_distance[pair] = edit_distance(cipher,
+            normalised_edit_distance[pair] = edit_distance(ciphertext,
                                                            key) / keysize
 
         # Store average edit distance for keysize.
@@ -165,17 +165,13 @@ def key_finder(key_size, data):
     return b"".join([single_byte_xor_breaker(item)[1] for item in output_list])
 
 
-def pad(block_size, data, multiples_allowed):
+def pad(block_size, data):
     # PKCS#7 padding.
-    if multiples_allowed == True:
-        if (len(data) % block_size) != 0:
-            pad_size = block_size - len(data) % block_size
-            data += bytes([pad_size]) * pad_size
-        else:
-            data += bytes([block_size]) * block_size
+    if (len(data) % block_size) == 0:
+        data += bytes([block_size]) * block_size
     else:
-        difference = block_size - len(data)
-        data += bytes([difference]) * difference
+        pad_size = block_size - len(data) % block_size
+        data += bytes([pad_size]) * pad_size
     return data
 
 
@@ -183,54 +179,8 @@ def depad(data):
     # PKCS#7 depadding.
     pad_size = data[-1]
     if data[-pad_size:] != bytes([pad_size]) * pad_size:
-        raise Exception("Bad padding encountered")
+        raise ValueError("Bad padding encountered")
     return data[0:-pad_size]
-
-
-class ECB_new:
-    def encrypt(self, key, data):
-        cipher = Cipher(algorithms.AES(key),
-                        modes.ECB(),
-                        backend=default_backend())
-        encryptor = cipher.encryptor()
-        return encryptor.update(data) + encryptor.finalize()
-
-    def decrypt(self, key, data):
-        cipher = Cipher(algorithms.AES(key),
-                        modes.ECB(),
-                        backend=default_backend())
-        decryptor = cipher.decryptor()
-        return decryptor.update(data) + decryptor.finalize()
-
-
-def ECB(mode, key, data):
-    cipher = Cipher(algorithms.AES(key),
-                    modes.ECB(),
-                    backend=default_backend())
-    if mode == "encrypt":
-        encryptor = cipher.encryptor()
-        result = encryptor.update(data) + encryptor.finalize()
-    else:
-        decryptor = cipher.decryptor()
-        result = decryptor.update(data) + decryptor.finalize()
-    return result
-
-
-def CBC(mode, iv, key, data):
-    iv = bytes([0]) * 16 if iv == b"" else iv
-    input_message = np.frombuffer(data, dtype="uint8").reshape(-1, 16)
-    output_message = b""
-    if mode == "encrypt":
-        for block in input_message:
-            step_1 = bytes_xor(iv, block)
-            iv = ECB("encrypt", key, step_1)
-            output_message += iv
-    else:
-        for block in input_message:
-            step_1 = ECB("decrypt", key, block)
-            output_message += bytes_xor(iv, step_1)
-            iv = block
-    return (output_message)
 
 
 def random_AES_key():
@@ -239,14 +189,12 @@ def random_AES_key():
 
 def profile_for(email):
     profile = parse_profile(email)
-    data = pad(16, profile, multiples_allowed=True)
-    encrypted_user_data = ECB("encrypt", b"PASSWORDPASSWORD", data)
-    return encrypted_user_data
+    data = pad(16, profile)
+    return AES_ECB(b"PASSWORDPASSWORD").encrypt(data)
 
 
 def profile_decrypt(data):
-    decrypted_user_data = ECB("decrypt", b"PASSWORDPASSWORD", data)
-    return decrypted_user_data
+    return AES_ECB(b"PASSWORDPASSWORD").decrypt(data)
 
 
 def unpack_profile(data):
@@ -260,32 +208,6 @@ def parse_profile(email):
     if 0 < email.count("=") + email.count("&"):
         raise Exception("Invalid character encountered")
     return encode(f"email={email}&uid=10&role=user")
-
-
-class ECB_oracle_C11:
-    def encrypt(self, data):
-        data = secrets.token_bytes(
-            secrets.randbelow(5)) + data + secrets.token_bytes(
-                secrets.randbelow(5))
-        data_p = pad(16, data, multiples_allowed=True)
-        if secrets.choice([True, False]):
-            mode = "ECB"
-            result = ECB_new().encrypt(random_AES_key(), data_p)
-        else:
-            mode = "CBC"
-            result = CBC("encrypt", secrets.token_bytes(16), random_AES_key(),
-                         data_p)
-        return result, mode
-
-
-class ECB_oracle_C12:
-    def __init__(self):
-        self.key = secrets.token_bytes(16)
-        self.secret = b64.b64decode(import_data("data_S2C12.txt"))
-
-    def encrypt(self, bytes_to_prepend):
-        data = pad(16, bytes_to_prepend + self.secret, multiples_allowed=True)
-        return ECB_new().encrypt(self.key, data)
 
 
 def ECB_mode_check(data):
@@ -311,8 +233,93 @@ def find_block_size(oracle):
         bytestring += b"0"
         output_size = len(oracle.encrypt(bytestring))
         if 100 < len(bytestring):
-            raise Exception("Indeterminable block size")
+            raise StopIteration("Indeterminable block size")
     return output_size - initial_output_size
+
+
+class profile:
+    def __init__(self, email):
+        pass
+
+    def create(self, email):
+        pass
+
+    def decrypt(self):
+        pass
+
+    def unpack(self):
+        pass
+
+    def parse(self):
+        pass
+
+
+class AES_ECB:
+    def __init__(self, key):
+        self.cipher = Cipher(algorithms.AES(key),
+                             modes.ECB(),
+                             backend=default_backend())
+
+    def encrypt(self, data):
+        encryptor = self.cipher.encryptor()
+        return encryptor.update(data) + encryptor.finalize()
+
+    def decrypt(self, data):
+        decryptor = self.cipher.decryptor()
+        return decryptor.update(data) + decryptor.finalize()
+
+
+class AES_CBC:
+    def __init__(self, iv, key):
+        self.iv = iv
+        self.key = key
+
+    def encrypt(self, data):
+        iv = self.iv
+        output_message = b""
+        input_message = np.frombuffer(data, dtype="uint8").reshape(-1, 16)
+        for block in input_message:
+            step_1 = bytes_xor(iv, block)
+            iv = AES_ECB(self.key).encrypt(step_1)
+            output_message += iv
+        return output_message
+
+    def decrypt(self, data):
+        iv = self.iv
+        output_message = b""
+        input_message = np.frombuffer(data, dtype="uint8").reshape(-1, 16)
+        for block in input_message:
+            step_1 = AES_ECB(self.key).decrypt(block)
+            output_message += bytes_xor(iv, step_1)
+            iv = block
+        return output_message
+
+
+class C11_ECB_oracle:
+    def encrypt(self, data):
+        data = secrets.token_bytes(
+            secrets.randbelow(5)) + data + secrets.token_bytes(
+                secrets.randbelow(5))
+        data_p = pad(16, data)
+        if secrets.choice([True, False]):
+            mode = "ECB"
+            result = AES_ECB(random_AES_key()).encrypt(data_p)
+        else:
+            mode = "CBC"
+            result = AES_CBC(secrets.token_bytes(16),
+                             random_AES_key()).encrypt(data_p)
+        print(f"Oracle mode used   : {mode}")
+        return result
+
+
+class C12_ECB_oracle:
+    def __init__(self):
+        self.key = random_AES_key()
+        self.secret = b64.b64decode(import_data("data_S2C12.txt"))
+
+    def encrypt(self, prepend):
+        data = pad(16, prepend + self.secret)
+        return AES_ECB(self.key).encrypt(data)
 
 
 class set_1:
@@ -387,11 +394,11 @@ class set_1:
                   "I go crazy when I hear a cymbal")
         key = encode("ICE")
         data = encode(stanza)
-        cyphertext = repeating_key_xor(data, key)
+        ciphertext = repeating_key_xor(data, key)
 
         print(f"Key                                : {key}")
         print(f"Plaintext                          : \n{stanza}")
-        print(f"Repeating key encrypt (hex encode) : {cyphertext.hex()}")
+        print(f"Repeating key encrypt (hex encode) : {ciphertext.hex()}")
 
     def challenge_6(self):
         print(f"\n-- Challenge 6 - Break repeating-key XOR --")
@@ -429,7 +436,7 @@ class set_1:
 
         key = encode("YELLOW SUBMARINE")
         data = b64.b64decode(import_data("data_S1C7.txt"))
-        plaintext = ECB_new().decrypt(key, data)
+        plaintext = AES_ECB(key).decrypt(data)
 
         print(f"Key    : {decode(key)}")
         print(f"Secret : \n{decode(plaintext[:90])}...")
@@ -469,28 +476,29 @@ class set_2:
         data = encode("YELLOW SUBMARINE")
         size = 20
         print(f"{data} padded to {size} bytes using PKCS#7 : "
-              f"{pad(size, data, multiples_allowed=False)}")
+              f"{pad(size, data)}")
 
     def challenge_10(self):
         print(f"\n-- Challenge 10 - Implement CBC mode --")
 
-        data_p = pad(16,
-                     b"This is a secret message! TOP SECRET",
-                     multiples_allowed=True)
-        key = pad(16, b"PASSWORD", multiples_allowed=False)
-        iv = pad(16, b"12345", multiples_allowed=False)
+        data_p = pad(16, b"This is a secret message! TOP SECRET")
+        key = b"PASSWORDPASSWORD"
+        iv = b"1122334455667788"
 
-        ECB_cyphertext = ECB_new().encrypt(key, data_p)
-        ECB_plaintext = depad(ECB_new().decrypt(key, ECB_cyphertext))
-        CBC_cyphertext = CBC("encrypt", iv, key, data_p)
-        CBC_plaintext = depad(CBC("decrypt", iv, key, CBC_cyphertext))
+        ECB_1 = AES_ECB(key)
+        CBC_1 = AES_CBC(iv, key)
+
+        ECB_ciphertext = ECB_1.encrypt(data_p)
+        ECB_plaintext = depad(ECB_1.decrypt(ECB_ciphertext))
+        CBC_ciphertext = CBC_1.encrypt(data_p)
+        CBC_plaintext = depad(CBC_1.decrypt(CBC_ciphertext))
 
         print(f"Padded Secret Message : {data_p}")
         print(f"Key                   : {key}")
-        print(f"ECB encrypted message : {ECB_cyphertext}")
+        print(f"ECB encrypted message : {ECB_ciphertext}")
         print(f"ECB decrypted message : {ECB_plaintext}")
         print(f"iv                    : {iv}")
-        print(f"CBC encrypted message : {CBC_cyphertext}")
+        print(f"CBC encrypted message : {CBC_ciphertext}")
         print(f"CBC decrypted message : {CBC_plaintext}")
         print("----- Part 2 ------")
 
@@ -498,24 +506,21 @@ class set_2:
         key = b"YELLOW SUBMARINE"
         iv = bytes([0]) * 16
 
-        decrypted = decode(depad(CBC("decrypt", iv, key, data)))
+        CBC_2 = AES_CBC(iv, key)
+
+        decrypted = decode(depad(CBC_2.decrypt(data)))
         print(f"CBC decrypted message : \n{decrypted[0:90]}...")
 
     def challenge_11(self):
         print(f"\n-- Challenge 11 - An ECB/CBC detection oracle --")
-
-        oracle = ECB_oracle_C11()
-        encryption, mode = oracle.encrypt(b"0" * 100)
-
-        print(f"Random AES Key generator    : {random_AES_key()}")
-        print(f"Oracle encryption mode used : {mode}")
-        print(f"ECB encrypted data?         : {ECB_mode_check(encryption)}")
+        print(f"Random AES Key     : {random_AES_key()}")
+        print(f"ECB mode detected? : {ECB_mode_check_2(C11_ECB_oracle())}")
 
     def challenge_12(self):
         print(f"\n-- Challenge 12 - "
               "Byte-at-a-time ECB decryption (Simple) --")
 
-        oracle = ECB_oracle_C12()
+        oracle = C12_ECB_oracle()
         block_size = find_block_size(oracle)
 
         print(f"Determined oracle block size : {block_size}")
@@ -591,7 +596,7 @@ class set_2:
         print(f"bytes to push into new block : {bytes_to_remove}")
         print(f"Crop aligning email          : {crop_email}")
         print(f"Encrypted profile crop       : {crop}")
-        print(f"Crop size                  : {len(crop)}")
+        print(f"Crop size                    : {len(crop)}")
         print(f"Decrypted crop               : {decryption}")
 
         # Create an email that shows its position in the encryption.
@@ -622,7 +627,7 @@ class set_2:
         print(f"Email ending block    : {block_end_email}")
 
         # Craft new ending for encrypted data.
-        new_end = decode(pad(16, b"admin", multiples_allowed=True))
+        new_end = decode(pad(16, b"admin"))
         new_end_encryption_email = block_end_email + new_end
         cut = profile_for(new_end_encryption_email)[32:48]
         decrypted_cut = profile_decrypt(cut)
