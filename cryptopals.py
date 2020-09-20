@@ -71,9 +71,6 @@ class profile:
     def __init__(self, email):
         pass
 
-    def create(self, email):
-        pass
-
     def decrypt(self):
         pass
 
@@ -516,7 +513,7 @@ def main():
     set_2.challenge_15()
 
     executionTime = (time.time() - startTime)
-    print('\nExecution time in seconds: ' + str(executionTime))
+    print(f'\nExecution time in seconds: {executionTime}')
 
 
 if __name__ == "__main__":
