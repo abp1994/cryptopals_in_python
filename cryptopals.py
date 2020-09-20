@@ -153,7 +153,7 @@ class C12_ECB_oracle:
 
 
 class set_1:
-    def challenge_1(self):
+    def challenge_1():
         print("\n-- Challenge 1 - Convert hex to base 64 --")
 
         hex_ciphertext = (
@@ -166,7 +166,7 @@ class set_1:
         print(f"Plaintext      : {decode(data)}")
         print(f"Base 64 encode : {decode(B64_encode)}")
 
-    def challenge_2(self):
+    def challenge_2():
         # Take two equal-size buffers and produce their XOR combination.
         print("\n-- Challenge 2 - Fixed XOR --")
 
@@ -181,7 +181,7 @@ class set_1:
         print(f"XOR decrypted plaintext : {decode(decrypted_data)}")
         print(f"Hex encode              : {decrypted_data.hex()}")
 
-    def challenge_3(self):
+    def challenge_3():
         print("\n-- Challenge 3 - Single-byte XOR cipher --")
 
         hex_ciphertext = (
@@ -196,7 +196,7 @@ class set_1:
         print(f"Corresponding Key                : {decode(byte)}")
         print(f"Decrypted plaintext              : {decode(plaintext)}")
 
-    def challenge_4(self):
+    def challenge_4():
         print("\n-- Challenge 4 - Detect single-char XOR --")
 
         file_name = "data_S1C4.txt"
@@ -217,7 +217,7 @@ class set_1:
         print(f"Corresponding key                : {decode(byte)}")
         print(f"Decrypted plaintext              : {decode(plaintext)}")
 
-    def challenge_5(self):
+    def challenge_5():
         print("\n-- Challenge 5 - Implement repeating-key XOR --")
 
         stanza = ("Burning 'em, if you ain't quick and nimble\n"
@@ -230,7 +230,7 @@ class set_1:
         print(f"Plaintext                          : \n{stanza}")
         print(f"Repeating key encrypt (hex encode) : {ciphertext.hex()}")
 
-    def challenge_6(self):
+    def challenge_6():
         print(f"\n-- Challenge 6 - Break repeating-key XOR --")
         print(f"-- Part 1 --")
 
@@ -261,7 +261,7 @@ class set_1:
         print(f"Corresponding Key     : {decode(key)}")
         print(f"Secret                : \n{decode(secret[:90])}...")
 
-    def challenge_7(self):
+    def challenge_7():
         print(f"\n-- Challenge 7 - AES in ECB mode --")
 
         key = encode("YELLOW SUBMARINE")
@@ -271,7 +271,7 @@ class set_1:
         print(f"Key    : {decode(key)}")
         print(f"Secret : \n{decode(plaintext[:90])}...")
 
-    def challenge_8(self):
+    def challenge_8():
         print(f"\n-- Challenge 8 - Detect AES in ECB mode --")
         print(f"-- Method 1 --")
 
@@ -300,7 +300,7 @@ class set_1:
 
 
 class set_2:
-    def challenge_9(self):
+    def challenge_9():
         print(f"\n-- Challenge 9 - Implement PKCS#7 padding --")
 
         data = encode("YELLOW SUBMARINE")
@@ -308,7 +308,7 @@ class set_2:
         print(f"{data} padded to {size} bytes using PKCS#7 : "
               f"{bo.pad(size, data)}")
 
-    def challenge_10(self):
+    def challenge_10():
         print(f"\n-- Challenge 10 - Implement CBC mode --")
 
         data_p = bo.pad(16, b"This is a secret message! TOP SECRET")
@@ -341,12 +341,12 @@ class set_2:
         decrypted = decode(bo.depad(CBC_2.decrypt(data)))
         print(f"CBC decrypted message : \n{decrypted[0:90]}...")
 
-    def challenge_11(self):
+    def challenge_11():
         print(f"\n-- Challenge 11 - An ECB/CBC detection oracle --")
         print(f"Random AES Key     : {bo.random_AES_key()}")
         print(f"ECB mode detected? : {ECB_mode_check_2(C11_ECB_oracle())}")
 
-    def challenge_12(self):
+    def challenge_12():
         print(f"\n-- Challenge 12 - "
               "Byte-at-a-time ECB decryption (Simple) --")
 
@@ -380,7 +380,7 @@ class set_2:
 
         print(f"Decoded message : \n{decode(bo.depad(decryption))}")
 
-    def challenge_13(self):
+    def challenge_13():
         print(f"\n-- Challenge 13 - ECB cut-and-paste --")
         print(f"-- Part 1 --")
 
@@ -475,11 +475,11 @@ class set_2:
         print(f"Attacker decrypted profile : {attacker_decrypted_profile}")
         print(f"Attacker  profile          : {attacker_profile}")
 
-    def challenge_14(self):
+    def challenge_14():
         print(f"\n-- Challenge 14 - Byte-at-a-time ECB decryption (Harder) --")
         # Find bytes needed to align end of blocks.
 
-    def challenge_15(self):
+    def challenge_15():
         print(f"\n-- Challenge 15 - PKCS#7 padding validation --")
 
         a = b"ICE ICE BABY\x04\x04\x04\x04"
@@ -498,22 +498,22 @@ def main():
     # https://cryptopals.com
     startTime = time.time()
 
-    set_1().challenge_1()
-    set_1().challenge_2()
-    set_1().challenge_3()
-    set_1().challenge_4()
-    set_1().challenge_5()
-    set_1().challenge_6()
-    set_1().challenge_7()
-    set_1().challenge_8()
+    set_1.challenge_1()
+    set_1.challenge_2()
+    set_1.challenge_3()
+    set_1.challenge_4()
+    set_1.challenge_5()
+    set_1.challenge_6()
+    set_1.challenge_7()
+    set_1.challenge_8()
 
-    set_2().challenge_9()
-    set_2().challenge_10()
-    set_2().challenge_11()
-    set_2().challenge_12()
-    set_2().challenge_13()
-    set_2().challenge_14()
-    set_2().challenge_15()
+    set_2.challenge_9()
+    set_2.challenge_10()
+    set_2.challenge_11()
+    set_2.challenge_12()
+    set_2.challenge_13()
+    set_2.challenge_14()
+    set_2.challenge_15()
 
     executionTime = (time.time() - startTime)
     print('\nExecution time in seconds: ' + str(executionTime))

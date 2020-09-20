@@ -8,8 +8,8 @@ def xor(a, b):
     return bytes(a_byte ^ b_byte for a_byte, b_byte in zip(a, b))
 
 
-def edit_distance(b1, b2):
-    tally = [bin(byte).count("1") for byte in xor(b1, b2)]
+def edit_distance(a, b):
+    tally = [bin(byte).count("1") for byte in xor(a, b)]
     return sum(tally)
 
 
@@ -52,10 +52,12 @@ def text_scorer(byte_array):
     abnormal_char_proportion = abnormal_char_count / len(byte_array)
 
     # Check string is of low punctuation proportion.
-    if letter_proportion < 0.8: return 0
+    if letter_proportion < 0.8:
+        return 0
 
     # Check string is of low abnormal character proportion.
-    if 0.2 < abnormal_char_proportion: return 0
+    if 0.2 < abnormal_char_proportion:
+        return 0
 
     # ---Full scorer---
     # http://cs.wellesley.edu/~fturbak/codman/letterfreq.html
@@ -94,8 +96,10 @@ def text_scorer(byte_array):
     # Make bytearray of only lowercase letters (lowerify uppercase letters).
     alphabet_bytes = bytearray()
     for byte in byte_array:
-        if 96 < byte < 123: alphabet_bytes.append(byte)
-        elif 64 < byte < 91: alphabet_bytes.append(byte + 22)
+        if 96 < byte < 123:
+            alphabet_bytes.append(byte)
+        elif 64 < byte < 91:
+            alphabet_bytes.append(byte + 22)
 
     # Count alphabet character frequencies.
     char_instances = list(Counter(alphabet_bytes).items())
@@ -159,7 +163,7 @@ def depad(data):
     # PKCS#7 depadding.
     pad_size = data[-1]
     if data[-pad_size:] != bytes([pad_size]) * pad_size:
-        raise ValueError("Bad padding encountered")
+        raise ValueError("Bad padding encountered!")
     return data[0:-pad_size]
 
 

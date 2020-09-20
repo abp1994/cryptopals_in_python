@@ -1,1 +1,1 @@
-print(range(256))
+import this
