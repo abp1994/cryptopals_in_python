@@ -9,8 +9,7 @@ def xor(a, b):
 
 
 def edit_distance(a, b):
-    tally = [bin(byte).count("1") for byte in xor(a, b)]
-    return sum(tally)
+    return sum([bin(byte).count("1") for byte in xor(a, b)])
 
 
 def single_byte_xor(byte, byte_array):

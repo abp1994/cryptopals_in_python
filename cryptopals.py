@@ -150,6 +150,7 @@ class C12_ECB_oracle:
 
 
 class set_1:
+    @staticmethod
     def challenge_1():
         print("\n-- Challenge 1 - Convert hex to base 64 --")
 
@@ -163,6 +164,7 @@ class set_1:
         print(f"Plaintext      : {decode(data)}")
         print(f"Base 64 encode : {decode(B64_encode)}")
 
+    @staticmethod
     def challenge_2():
         # Take two equal-size buffers and produce their XOR combination.
         print("\n-- Challenge 2 - Fixed XOR --")
@@ -178,6 +180,7 @@ class set_1:
         print(f"XOR decrypted plaintext : {decode(decrypted_data)}")
         print(f"Hex encode              : {decrypted_data.hex()}")
 
+    @staticmethod
     def challenge_3():
         print("\n-- Challenge 3 - Single-byte XOR cipher --")
 
@@ -193,6 +196,7 @@ class set_1:
         print(f"Corresponding Key                : {decode(byte)}")
         print(f"Decrypted plaintext              : {decode(plaintext)}")
 
+    @staticmethod
     def challenge_4():
         print("\n-- Challenge 4 - Detect single-char XOR --")
 
@@ -214,6 +218,7 @@ class set_1:
         print(f"Corresponding key                : {decode(byte)}")
         print(f"Decrypted plaintext              : {decode(plaintext)}")
 
+    @staticmethod
     def challenge_5():
         print("\n-- Challenge 5 - Implement repeating-key XOR --")
 
@@ -227,6 +232,7 @@ class set_1:
         print(f"Plaintext                          : \n{stanza}")
         print(f"Repeating key encrypt (hex encode) : {ciphertext.hex()}")
 
+    @staticmethod
     def challenge_6():
         print(f"\n-- Challenge 6 - Break repeating-key XOR --")
         print(f"-- Part 1 --")
@@ -258,6 +264,7 @@ class set_1:
         print(f"Corresponding Key     : {decode(key)}")
         print(f"Secret                : \n{decode(secret[:90])}...")
 
+    @staticmethod
     def challenge_7():
         print(f"\n-- Challenge 7 - AES in ECB mode --")
 
@@ -268,6 +275,7 @@ class set_1:
         print(f"Key    : {decode(key)}")
         print(f"Secret : \n{decode(plaintext[:90])}...")
 
+    @staticmethod
     def challenge_8():
         print(f"\n-- Challenge 8 - Detect AES in ECB mode --")
         print(f"-- Method 1 --")
@@ -288,7 +296,7 @@ class set_1:
         print(f"Corresponding line            : {line_index}")
         print(f"-- Method 2 --")
 
-        # Find if data contains duplicate lines.
+        # Find if data contains duplicate blocks.
         for line_index2, line in enumerate(hex_ciphertext.splitlines()):
             if bo.ECB_mode_check(bytes.fromhex(line)): break
 
@@ -297,6 +305,7 @@ class set_1:
 
 
 class set_2:
+    @staticmethod
     def challenge_9():
         print(f"\n-- Challenge 9 - Implement PKCS#7 padding --")
 
@@ -305,6 +314,7 @@ class set_2:
         print(f"{data} padded to {size} bytes using PKCS#7 : "
               f"{bo.pad(size, data)}")
 
+    @staticmethod
     def challenge_10():
         print(f"\n-- Challenge 10 - Implement CBC mode --")
 
@@ -338,11 +348,13 @@ class set_2:
         decrypted = decode(bo.depad(CBC_2.decrypt(data)))
         print(f"CBC decrypted message : \n{decrypted[0:90]}...")
 
+    @staticmethod
     def challenge_11():
         print(f"\n-- Challenge 11 - An ECB/CBC detection oracle --")
         print(f"Random AES Key     : {bo.random_AES_key()}")
         print(f"ECB mode detected? : {ECB_mode_check_2(C11_ECB_oracle())}")
 
+    @staticmethod
     def challenge_12():
         print(f"\n-- Challenge 12 - "
               "Byte-at-a-time ECB decryption (Simple) --")
@@ -377,6 +389,7 @@ class set_2:
 
         print(f"Decoded message : \n{decode(bo.depad(decryption))}")
 
+    @staticmethod
     def challenge_13():
         print(f"\n-- Challenge 13 - ECB cut-and-paste --")
         print(f"-- Part 1 --")
@@ -472,10 +485,12 @@ class set_2:
         print(f"Attacker decrypted profile : {attacker_decrypted_profile}")
         print(f"Attacker  profile          : {attacker_profile}")
 
+    @staticmethod
     def challenge_14():
         print(f"\n-- Challenge 14 - Byte-at-a-time ECB decryption (Harder) --")
         # Find bytes needed to align end of blocks.
 
+    @staticmethod
     def challenge_15():
         print(f"\n-- Challenge 15 - PKCS#7 padding validation --")
 
