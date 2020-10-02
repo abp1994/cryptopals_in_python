@@ -41,7 +41,7 @@ def unpack_profile(data):
 
 
 def parse_profile(email):
-    if 0 < email.count("=") + email.count("&"):
+    if 0 < sum(map(email.count, ("=", "&"))):
         raise Exception("Invalid character encountered")
     return encode(f"email={email}&uid=10&role=user")
 
