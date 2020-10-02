@@ -486,9 +486,9 @@ class set_2:
 
         for i in [a, b, c]:
             try:
-                print(f"bo.depad of {i} : {bo.depad(i)}")
+                print(f"Depad of {i} : {bo.depad(i)}")
             except Exception as e:
-                print(f"bo.depad of {i} : {e}")
+                print(f"Depad of {i} : {e}")
 
 
 def main():
