@@ -113,14 +113,14 @@ class C11_ECB_oracle:
         data = secrets.token_bytes(
             secrets.randbelow(5)) + data + secrets.token_bytes(
                 secrets.randbelow(5))
-        data_p = bo.pad(16, data)
+        data_padded = bo.pad(16, data)
         if secrets.choice([True, False]):
             mode = "ECB"
-            result = AES_ECB(bo.random_AES_key()).encrypt(data_p)
+            result = AES_ECB(bo.random_AES_key()).encrypt(data_padded)
         else:
             mode = "CBC"
             result = AES_CBC(secrets.token_bytes(16),
-                             bo.random_AES_key()).encrypt(data_p)
+                             bo.random_AES_key()).encrypt(data_padded)
         print(f"Oracle mode used   : {mode}")
         return result
 
