@@ -23,27 +23,27 @@ def decode(byte_array):
     return byte_array.decode("utf-8")
 
 
-def profile_for(email):
-    profile = parse_profile(email)
-    data = bo.pad(16, profile)
-    return AES_ECB(b"PASSWORDPASSWORD").encrypt(data)
+def profile_create(email):
+    data = profile_parse(email)
+    padded_data = bo.pad(16, data)
+    return AES_ECB(b"PASSWORDPASSWORD").encrypt(padded_data)
+
+
+def profile_parse(email):
+    if 0 < sum(map(email.count, ("=", "&"))):
+        raise Exception("Invalid character encountered")
+    return encode(f"email={email}&uid=10&role=user")
 
 
 def profile_decrypt(data):
     return AES_ECB(b"PASSWORDPASSWORD").decrypt(data)
 
 
-def unpack_profile(data):
+def profile_unpack(data):
     return {
         decode(key): decode(value)
         for key, value in (line.split(b"=") for line in data.split(b"&"))
     }
-
-
-def parse_profile(email):
-    if 0 < sum(map(email.count, ("=", "&"))):
-        raise Exception("Invalid character encountered")
-    return encode(f"email={email}&uid=10&role=user")
 
 
 def ECB_mode_check_2(oracle):
@@ -382,17 +382,17 @@ class set_2:
 
         text = """foo=bar&baz=qux&zap=zazzle"""
         email = "hello@world.com"
-        parsed = parse_profile(email)
+        parsed = profile_parse(email)
 
         print(f"Example string   : {text}")
-        print(f"Unpacked profile : {unpack_profile(encode(text))}")
+        print(f"Unpacked profile : {profile_unpack(encode(text))}")
         print(f"Example Email    : {email}")
         print(f"Parsed profile   : {parsed}")
-        print(f"Unpacked profile : {unpack_profile(parsed)}")
+        print(f"Unpacked profile : {profile_unpack(parsed)}")
         print(f"-- Part 2 --")
 
         base_email = "user@hack.com"
-        base_encryption = profile_for(base_email)
+        base_encryption = profile_create(base_email)
         base_encryption_len = len(base_encryption)
         base_decryption = profile_decrypt(base_encryption)
 
@@ -406,7 +406,7 @@ class set_2:
         end_align_encryption = base_encryption
         while len(end_align_encryption) == base_encryption_len:
             end_align_email = "a" + end_align_email
-            end_align_encryption = profile_for(end_align_email)
+            end_align_encryption = profile_create(end_align_email)
         end_align_encryption_len = len(end_align_encryption)
 
         print(f"End aligning email : {end_align_email}")
@@ -416,7 +416,7 @@ class set_2:
         # Add bytes to push unwanted data from encryption into end block and crop useful blocks.
         bytes_to_remove = len(b"user")
         crop_email = ("b" * bytes_to_remove) + end_align_email
-        crop = profile_for(crop_email)[0:48]
+        crop = profile_create(crop_email)[0:48]
         decryption = profile_decrypt(crop)
 
         print(f"bytes to push into new block : {bytes_to_remove}")
@@ -428,14 +428,14 @@ class set_2:
         # Create an email that shows its position in the encryption.
         position_email = base_email
         # Look for two identical blocks in encryption.
-        while not bo.ECB_mode_check(profile_for(position_email)):
+        while not bo.ECB_mode_check(profile_create(position_email)):
             position_email = "c" + position_email
 
         print(f"Position finding email : {position_email}")
 
         # Find position at which duplicated block starts changing.
         position = 0
-        while bo.ECB_mode_check(profile_for(position_email)):
+        while bo.ECB_mode_check(profile_create(position_email)):
             position_email_list = list(position_email)
             position_email_list[position] = "d"
             position_email = "".join(position_email_list)
@@ -455,7 +455,7 @@ class set_2:
         # Craft new ending for encrypted data.
         new_end = decode(bo.pad(16, b"admin"))
         new_end_encryption_email = block_end_email + new_end
-        cut = profile_for(new_end_encryption_email)[32:48]
+        cut = profile_create(new_end_encryption_email)[32:48]
         decrypted_cut = profile_decrypt(cut)
 
         print(f"new end encrypting email : {new_end_encryption_email}")
@@ -465,7 +465,7 @@ class set_2:
         attacker_encrypted_profile = crop + cut
         attacker_decrypted_profile = profile_decrypt(
             attacker_encrypted_profile)
-        attacker_profile = unpack_profile(bo.depad(attacker_decrypted_profile))
+        attacker_profile = profile_unpack(bo.depad(attacker_decrypted_profile))
 
         print(f"Attacker encrypted profile : {attacker_encrypted_profile}")
         print(f"Attacker decrypted profile : {attacker_decrypted_profile}")
