@@ -67,20 +67,6 @@ def find_block_size(oracle):
     return output_size - initial_output_size
 
 
-class profile:
-    def __init__(self, email):
-        pass
-
-    def decrypt(self):
-        pass
-
-    def unpack(self):
-        pass
-
-    def parse(self):
-        pass
-
-
 class AES_ECB:
     def __init__(self, key):
         self.cipher = Cipher(algorithms.AES(key),
@@ -412,7 +398,7 @@ class set_2:
 
         print(f"Base email        : {base_email}")
         print(f"Encrypted profile : {base_encryption}")
-        print(f"Encrypted size  : {base_encryption_len}")
+        print(f"Encrypted size    : {base_encryption_len}")
         print(f"Decrypted data    : {base_decryption}")
 
         # Create an email that creates a whole new block in output.
@@ -425,7 +411,7 @@ class set_2:
 
         print(f"End aligning email : {end_align_email}")
         print(f"Encrypted profile  : {end_align_encryption}")
-        print(f"Encrypted size   : {end_align_encryption_len}")
+        print(f"Encrypted size     : {end_align_encryption_len}")
 
         # Add bytes to push unwanted data from encryption into end block and crop useful blocks.
         bytes_to_remove = len(b"user")
