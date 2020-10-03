@@ -137,11 +137,17 @@ class C12_ECB_oracle:
         return AES_ECB(self.key).encrypt(data)
 
 
+def text_breaker(packet):
+    line, line_index = packet
+    data = bytes.fromhex(line)
+    score, byte = bo.single_byte_xor_breaker(data)
+    #print(line_index)
+    return score, byte, line_index, data
+
+
 class set_1:
     @staticmethod
     def challenge_1():
-
-        print("Number of processors: ", mp.cpu_count())
         print("\n-- Challenge 1 - Convert hex to base 64 --")
 
         hex_ciphertext = (
@@ -188,6 +194,28 @@ class set_1:
 
     @staticmethod
     def challenge_4():
+        print("\n-- Challenge 4 - Detect single-char XOR --")
+
+        file_name = "data_S1C4.txt"
+        hex_ciphertext = import_data(file_name)
+
+        with concurrent.futures.ProcessPoolExecutor() as executor:
+            results = executor.map(text_breaker, [
+                (line, line_index)
+                for line_index, line in enumerate(hex_ciphertext.splitlines())
+            ])
+
+        score, byte, line_index, data = max(results)
+        plaintext = bo.single_byte_xor(byte, data)
+
+        print(f"Hex data file                    : {file_name}")
+        print(f"Highest frequency analysis score : {score}")
+        print(f"Corresponding line               : {line_index}")
+        print(f"Corresponding key                : {decode(byte)}")
+        print(f"Decrypted plaintext              : {decode(plaintext)}")
+
+    @staticmethod
+    def challenge_4old():
         print("\n-- Challenge 4 - Detect single-char XOR --")
 
         file_name = "data_S1C4.txt"
@@ -498,25 +526,26 @@ class set_2:
 def main():
     print("\n\n-- The Cryptopals Crypto Challenges in Python by Akaash BP --")
     # https://cryptopals.com
+    print("Number of processors: ", mp.cpu_count())
+
     startTime = time.time()
 
-    with concurrent.futures.ProcessPoolExecutor() as executor:
-        executor.submit(set_1.challenge_1)
-        executor.submit(set_1.challenge_2)
-        executor.submit(set_1.challenge_3)
-        executor.submit(set_1.challenge_4)
-        executor.submit(set_1.challenge_5)
-        executor.submit(set_1.challenge_6)
-        executor.submit(set_1.challenge_7)
-        executor.submit(set_1.challenge_8)
-        executor.submit(set_2.challenge_9)
-        executor.submit(set_2.challenge_10)
-        executor.submit(set_2.challenge_11)
-        executor.submit(set_2.challenge_12)
-        executor.submit(set_2.challenge_13)
-        executor.submit(set_2.challenge_14)
-        executor.submit(set_2.challenge_15)
-        print('started all processes')
+    set_1.challenge_1()
+    set_1.challenge_2()
+    set_1.challenge_3()
+    set_1.challenge_4()
+    set_1.challenge_5()
+    set_1.challenge_6()
+    set_1.challenge_7()
+    set_1.challenge_8()
+
+    set_2.challenge_9()
+    set_2.challenge_10()
+    set_2.challenge_11()
+    set_2.challenge_12()
+    set_2.challenge_13()
+    set_2.challenge_14()
+    set_2.challenge_15()
 
     executionTime = (time.time() - startTime)
     print(f'\nExecution time in seconds: {executionTime}')
