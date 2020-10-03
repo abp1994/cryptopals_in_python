@@ -1,5 +1,6 @@
 import secrets
 import numpy as np
+import multiprocessing as mp
 from collections import Counter
 from scipy.stats import chisquare
 
@@ -16,7 +17,31 @@ def single_byte_xor(byte, byte_array):
     return xor(byte_array, byte * len(byte_array))
 
 
+def attempt_crack(char, ciphertext):
+
+    byte = bytes([char])
+    print(byte)
+    score = text_scorer(single_byte_xor(byte, ciphertext))
+    return score, byte
+
+
 def single_byte_xor_breaker(ciphertext):
+    pool = mp.Pool(mp.cpu_count())
+    results = []
+
+    results = pool.starmap_async(attempt_crack,
+                                 [(char, ciphertext)
+                                  for char in range(256)]).get()
+
+    #results = pool.starmap(attempt_crack,
+    #[(n, ciphertext) for n in range(256)])
+
+    pool.close()
+    print(max(results))
+    return max(results)
+
+
+def single_byte_xor_breaker2(ciphertext):
     def attempt_crack():
         for char in range(256):
             byte = bytes([char])

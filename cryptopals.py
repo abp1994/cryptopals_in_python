@@ -4,6 +4,7 @@ import secrets
 import numpy as np
 import base64 as b64
 import byte_operations as bo
+import multiprocessing as mp
 from collections import Counter
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
@@ -138,6 +139,8 @@ class C12_ECB_oracle:
 class set_1:
     @staticmethod
     def challenge_1():
+
+        print("Number of processors: ", mp.cpu_count())
         print("\n-- Challenge 1 - Convert hex to base 64 --")
 
         hex_ciphertext = (
