@@ -58,9 +58,9 @@ def find_block_size(oracle):
     # Record change in size of output.
     initial_output_size = len(oracle.encrypt(b""))
     output_size = initial_output_size
-    bytestring = b""
+    bytestring = bytearray()
     while output_size == initial_output_size:
-        bytestring += b"0"
+        bytestring.append(0)
         output_size = len(oracle.encrypt(bytestring))
         if 100 < len(bytestring):
             raise StopIteration("Indeterminable block size")
@@ -89,21 +89,21 @@ class AES_CBC:
 
     def encrypt(self, data):
         iv = self.iv
-        output_message = b""
+        output_message = bytearray()
         input_message = np.frombuffer(data, dtype="uint8").reshape(-1, 16)
         for block in input_message:
             step_1 = bo.xor(iv, block)
             iv = AES_ECB(self.key).encrypt(step_1)
-            output_message += iv
+            output_message.extend(iv)
         return output_message
 
     def decrypt(self, data):
         iv = self.iv
-        output_message = b""
+        output_message = bytearray()
         input_message = np.frombuffer(data, dtype="uint8").reshape(-1, 16)
         for block in input_message:
             step_1 = AES_ECB(self.key).decrypt(block)
-            output_message += bo.xor(iv, step_1)
+            output_message.extend(bo.xor(iv, step_1))
             iv = block
         return output_message
 
@@ -351,7 +351,7 @@ class set_2:
         print(f"Determined oracle block size : {block_size}")
         print(f"Oracle using ECB mode?       : {ECB_mode_check_2(oracle)}")
 
-        decryption = b""
+        decryption = bytearray()
         data_size = len(oracle.encrypt(b""))
 
         # For all blocks in the data.
@@ -362,6 +362,7 @@ class set_2:
             # For all byte positions along the block (15->0).
             for byte_position in reversed(range(block_size)):
                 buffer = b"0" * byte_position + decryption
+                #buffer = b"0" * byte_position.extend(decryption)
                 model_bytes = oracle.encrypt(
                     b"0" * (byte_position))[block_start:block_end]
 
@@ -370,7 +371,7 @@ class set_2:
                     byte = bytes([char])
                     if model_bytes == oracle.encrypt(
                             buffer + byte)[block_start:block_end]:
-                        decryption += byte
+                        decryption.extend(byte)
                         break
 
         print(f"Decoded message : \n{decode(bo.depad(decryption))}")
