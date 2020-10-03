@@ -20,7 +20,7 @@ def single_byte_xor_breaker(ciphertext):
     def attempt_crack():
         for char in range(256):
             byte = bytes([char])
-            score = text_scorer(single_byte_xor(byte, ciphertext))
+            score = text_scorer(single_byte_xor(byte, ciphertext)).score()
             yield score, byte
 
     return max(attempt_crack())
@@ -33,7 +33,92 @@ def repeating_key_xor(ciphertext, key):
     return bytes([nth_xor(n, byte) for n, byte in enumerate(ciphertext)])
 
 
-def text_scorer(byte_array):
+class text_scorer:
+    # http://cs.wellesley.edu/~fturbak/codman/letterfreq.html
+    char_frequencies = [
+        ["a", 0.08167],
+        ["b", 0.01492],
+        ["c", 0.02782],
+        ["d", 0.04253],
+        ["e", 0.12702],
+        ["f", 0.02228],
+        ["g", 0.02015],
+        ["h", 0.06094],
+        ["i", 0.06966],
+        ["j", 0.00153],
+        ["k", 0.00772],
+        ["l", 0.04025],
+        ["m", 0.02406],
+        ["n", 0.06749],
+        ["o", 0.07507],
+        ["p", 0.01929],
+        ["q", 0.00095],
+        ["r", 0.05987],
+        ["s", 0.06327],
+        ["t", 0.09056],
+        ["u", 0.02758],
+        ["v", 0.00978],
+        ["w", 0.02360],
+        ["x", 0.00150],
+        ["y", 0.01974],
+        ["z", 0.00074],
+    ]
+
+    expected_frequencies = [row[1] for row in char_frequencies]
+
+    def __init__(self, byte_array):
+        self.byte_array = byte_array
+
+    def score(self):
+        # ---Prescreen---
+        letter_count = 0
+        abnormal_char_count = 0
+        for char in self.byte_array:
+            # Count alphabet characters.
+            if 64 < char < 91 or 96 < char < 123 or char == 32:
+                letter_count += 1
+
+            # Count abnormal chars (not including tab type chars).
+            if not (8 < char < 16 or 31 < char < 127):
+                abnormal_char_count += 1
+
+        letter_proportion = letter_count / len(self.byte_array)
+        abnormal_char_proportion = abnormal_char_count / len(self.byte_array)
+
+        # Check string is of low punctuation proportion.
+        if letter_proportion < 0.8:
+            return 0
+
+        # Check string is of low abnormal character proportion.
+        if 0.2 < abnormal_char_proportion:
+            return 0
+
+        # ---Full scorer---
+        observed_frequencies = np.zeros(26)
+
+        # Make bytearray of only lowercase letters (lowerify uppercase letters).
+        alphabet_bytes = bytearray()
+        for byte in self.byte_array:
+            if 96 < byte < 123:
+                alphabet_bytes.append(byte)
+            elif 64 < byte < 91:
+                alphabet_bytes.append(byte + 22)
+
+        # Count alphabet character frequencies.
+        char_instances = list(Counter(alphabet_bytes).items())
+
+        for char, frequency in char_instances:
+            observed_frequencies[char - 97] = frequency
+
+        # Normalise observed_frequencies.
+        observed_frequencies = observed_frequencies / np.sum(
+            observed_frequencies)
+
+        # Return goodness of fit.
+        return chisquare(observed_frequencies, self.expected_frequencies)[1]
+
+
+def text_scorer2(byte_array):
 
     # ---Prescreen---
     letter_count = 0

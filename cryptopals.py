@@ -8,6 +8,9 @@ from collections import Counter
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 
+import cProfile
+import pstats
+
 
 def import_data(file_name):
     file_path = os.path.join(os.path.dirname(__file__), file_name)
@@ -240,7 +243,7 @@ class set_1:
             for key_size in likely_key_sizes[0:3]:
                 key = bo.key_finder(key_size, data)
                 secret = bo.repeating_key_xor(data, key)
-                score = bo.text_scorer(secret)
+                score = bo.text_scorer(secret).score()
                 yield score, key, secret
 
         score, key, secret = max(key_comparison())
@@ -491,10 +494,7 @@ class set_2:
                 print(f"Depad of {i} : {e}")
 
 
-def main():
-    print("\n\n-- The Cryptopals Crypto Challenges in Python by Akaash BP --")
-    # https://cryptopals.com
-    startTime = time.time()
+def main2():
 
     set_1.challenge_1()
     set_1.challenge_2()
@@ -512,6 +512,17 @@ def main():
     set_2.challenge_13()
     set_2.challenge_14()
     set_2.challenge_15()
+
+
+def main():
+    print("\n\n-- The Cryptopals Crypto Challenges in Python by Akaash BP --")
+    # https://cryptopals.com
+    startTime = time.time()
+    main2()
+    '''profile = cProfile.Profile()
+    profile.runcall(main2)
+    ps = pstats.Stats(profile)
+    ps.print_stats() '''
 
     executionTime = (time.time() - startTime)
     print(f'\nExecution time in seconds: {executionTime}')
