@@ -476,7 +476,7 @@ class set_2:
     @staticmethod
     def challenge_14():
         print(f"\n-- Challenge 14 - Byte-at-a-time ECB decryption (Harder) --")
-        # Find bytes needed to align end of blocks.
+        print(f"To be completed!")
 
     @staticmethod
     def challenge_15():
@@ -493,7 +493,7 @@ class set_2:
                 print(f"Depad of {i} : {e}")
 
 
-def main2():
+def run_challenges():
 
     set_1.challenge_1()
     set_1.challenge_2()
@@ -517,9 +517,11 @@ def main():
     print("\n\n-- The Cryptopals Crypto Challenges in Python by Akaash BP --")
     # https://cryptopals.com
     startTime = time.time()
-    main2()
+    run_challenges()
+
+    # profiling stats
     '''profile = cProfile.Profile()
-    profile.runcall(main2)
+    profile.runcall(run_challenges)
     ps = pstats.Stats(profile)
     ps.print_stats() '''
 
