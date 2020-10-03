@@ -3,6 +3,7 @@ import time
 import secrets
 import numpy as np
 import base64 as b64
+import concurrent.futures
 import byte_operations as bo
 import multiprocessing as mp
 from collections import Counter
@@ -499,22 +500,23 @@ def main():
     # https://cryptopals.com
     startTime = time.time()
 
-    set_1.challenge_1()
-    set_1.challenge_2()
-    set_1.challenge_3()
-    set_1.challenge_4()
-    set_1.challenge_5()
-    set_1.challenge_6()
-    set_1.challenge_7()
-    set_1.challenge_8()
-
-    set_2.challenge_9()
-    set_2.challenge_10()
-    set_2.challenge_11()
-    set_2.challenge_12()
-    set_2.challenge_13()
-    set_2.challenge_14()
-    set_2.challenge_15()
+    with concurrent.futures.ProcessPoolExecutor() as executor:
+        executor.submit(set_1.challenge_1)
+        executor.submit(set_1.challenge_2)
+        executor.submit(set_1.challenge_3)
+        executor.submit(set_1.challenge_4)
+        executor.submit(set_1.challenge_5)
+        executor.submit(set_1.challenge_6)
+        executor.submit(set_1.challenge_7)
+        executor.submit(set_1.challenge_8)
+        executor.submit(set_2.challenge_9)
+        executor.submit(set_2.challenge_10)
+        executor.submit(set_2.challenge_11)
+        executor.submit(set_2.challenge_12)
+        executor.submit(set_2.challenge_13)
+        executor.submit(set_2.challenge_14)
+        executor.submit(set_2.challenge_15)
+        print('started all processes')
 
     executionTime = (time.time() - startTime)
     print(f'\nExecution time in seconds: {executionTime}')
