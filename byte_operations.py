@@ -28,14 +28,9 @@ def attempt_crack(char, ciphertext):
 def single_byte_xor_breaker(ciphertext):
     pool = mp.Pool(mp.cpu_count())
     results = []
-
     results = pool.starmap_async(attempt_crack,
                                  [(char, ciphertext)
                                   for char in range(256)]).get()
-
-    #results = pool.starmap(attempt_crack,
-    #[(n, ciphertext) for n in range(256)])
-
     pool.close()
     print(max(results))
     return max(results)
