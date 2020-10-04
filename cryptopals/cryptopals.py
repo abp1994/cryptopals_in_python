@@ -14,8 +14,7 @@ import byte_operations as bo
 
 
 def import_data(file_name):
-    file_path = os.path.join(os.path.dirname(__file__), "data/", file_name)
-    print(file_path)
+    file_path = os.path.join(os.path.dirname(__file__), "../data/", file_name)
     with open(file_path) as f:
         return f.read()
 
