@@ -1,14 +1,16 @@
+import base64 as b64
+import cProfile
 import os
-import time
 import pstats
 import secrets
-import cProfile
-import numpy as np
-import base64 as b64
-import byte_operations as bo
+import time
 from collections import Counter
+
+import numpy as np
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
+
+import byte_operations as bo
 
 
 def import_data(file_name):
