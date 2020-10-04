@@ -1,6 +1,7 @@
 import secrets
-import numpy as np
 from collections import Counter
+
+import numpy as np
 from scipy.stats import chisquare
 
 
