@@ -86,12 +86,8 @@ class text_scorer:
         letter_proportion = letter_count / len(self.byte_array)
         abnormal_char_proportion = abnormal_char_count / len(self.byte_array)
 
-        # Check string is of low punctuation proportion.
-        if letter_proportion < 0.8:
-            return 0
-
-        # Check string is of low abnormal character proportion.
-        if 0.2 < abnormal_char_proportion:
+        # Check string is of of good quality otherwise exit.
+        if letter_proportion < 0.8 or 0.2 < abnormal_char_proportion:
             return 0
 
         # ---Full scorer---
@@ -99,11 +95,11 @@ class text_scorer:
 
         # Make bytearray of only lowercase letters (lowerify uppercase letters).
         alphabet_bytes = bytearray()
-        for byte in self.byte_array:
-            if 96 < byte < 123:
-                alphabet_bytes.append(byte)
-            elif 64 < byte < 91:
-                alphabet_bytes.append(byte + 22)
+        for char in self.byte_array:
+            if 96 < char < 123:
+                alphabet_bytes.append(char)
+            elif 64 < char < 91:
+                alphabet_bytes.append(char + 22)
 
         # Count alphabet character frequencies.
         char_instances = list(Counter(alphabet_bytes).items())
