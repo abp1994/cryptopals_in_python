@@ -4,7 +4,7 @@ Cryptopals.py is a Python script that works its way through the [Cryptopals](htt
 
 ## Usage
 
-Simply run the cryptopals.py script.
+Simply run the cryptopals.py script in the cryptopals directory.
 
 ## License
 
