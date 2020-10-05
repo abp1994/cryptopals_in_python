@@ -67,49 +67,51 @@ class text_scorer:
     ]
 
     expected_frequencies = [row[1] for row in char_frequencies]
-    alphabet_char_index = list(range(65, 91)) + list(range(97, 123)) + [32]
-    #unlikely_char_index = [12, 15] + list(range(32, 65)) + list(range(
-    #    91, 97)) + list(range(123, 127))
-    #very_unlikely_char_index = list(range(0, 10)) + list(range(11, 13)) + list(
-    #  range(14, 32)) + list(range(127, 256))
-
+    letter_char_index = list(range(65, 91)) + list(range(97, 123)) + [32]
     abnormal_char_index = list(range(0, 9)) + list(range(16, 32)) + list(
         range(127, 256))
 
     def __init__(self, byte_array):
-        self.byte_array = byte_array
         self.total_chars = len(byte_array)
-        self.letters = Counter(byte_array)
+        self.char_instances = Counter(byte_array)
 
     def score(self):
 
         # ---Prescreen---
-
-        letters = [
-            self.letters.get(char, 0) for char in self.alphabet_char_index
+        # check for high letter proportion
+        letter_instances = [
+            self.char_instances.get(char, 0) for char in self.letter_char_index
         ]
 
-        if (sum(letters) / self.total_chars) < 0.8:
+        if (sum(letter_instances) / self.total_chars) < 0.8:
             return 0
 
-        abnormal_chars = sum(
-            self.letters.get(char, 0) for char in self.abnormal_char_index)
+        # check for low abnormal character proportion
+        abnormal_char_instances = {
+            self.char_instances.get(char, 0)
+            for char in self.abnormal_char_index
+        }
 
-        if 0.2 < (abnormal_chars / self.total_chars):
+        if 0.2 < (sum(abnormal_char_instances) / self.total_chars):
             return 0
+
         # ---Full scorer---
 
-        # Count alphabet character frequencies (lowerify uppercase letters).
-        observed_instances = [
-            a + b for a, b in zip(letters[0:26], letters[26:52])
+        # Count letter instances independent of case.
+        case_independent_letter_instances = [
+            a + b
+            for a, b in zip(letter_instances[0:26], letter_instances[26:52])
         ]
 
-        # Normalise observed_frequencies.
-        total = sum(observed_instances)
-        observed_frequencies = [a / total for a in observed_instances]
+        # Normalise letter instances.
+        total = sum(case_independent_letter_instances)
+        case_independent_letter_frequencies = [
+            a / total for a in case_independent_letter_instances
+        ]
 
         # Return goodness of fit.
-        return chisquare(observed_frequencies, self.expected_frequencies)[1]
+        return chisquare(case_independent_letter_frequencies,
+                         self.expected_frequencies)[1]
 
 
 def find_key_size(max_size, data):
