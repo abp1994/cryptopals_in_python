@@ -67,13 +67,14 @@ class text_scorer:
     ]
 
     expected_frequencies = [row[1] for row in char_frequencies]
-    #alphabet_char_index = chain(range(65, 91), range(97, 123))
-    alphabet_char_index = list(range(65, 91)) + list(range(97, 123))
-    #unlikely_char_index = chain(range(0, 65), range(91, 97), range(123, 128))
-    unlikely_char_index = [12, 15] + list(range(32, 65)) + list(range(
-        91, 97)) + list(range(123, 127))
-    very_unlikely_char_index = list(range(0, 10)) + list(range(11, 13)) + list(
-        range(14, 32)) + list(range(127, 256))
+    alphabet_char_index = list(range(65, 91)) + list(range(97, 123)) + [32]
+    #unlikely_char_index = [12, 15] + list(range(32, 65)) + list(range(
+    #    91, 97)) + list(range(123, 127))
+    #very_unlikely_char_index = list(range(0, 10)) + list(range(11, 13)) + list(
+    #  range(14, 32)) + list(range(127, 256))
+
+    abnormal_char_index = list(range(0, 9)) + list(range(16, 32)) + list(
+        range(127, 256))
 
     def __init__(self, byte_array):
         self.byte_array = byte_array
@@ -83,22 +84,20 @@ class text_scorer:
     def score(self):
 
         # ---Prescreen---
-        very_unlikely_chars = sum(
-            self.letters.get(char, 0)
-            for char in self.very_unlikely_char_index)
-        if 0 < very_unlikely_chars:
-            return 0
 
-        unlikely_chars = sum(
-            self.letters.get(char, 0) for char in self.unlikely_char_index)
-
-        if 0.4 < unlikely_chars / self.total_chars:
-            return 0
-
-        # ---Full scorer---
         letters = [
             self.letters.get(char, 0) for char in self.alphabet_char_index
         ]
+
+        if (sum(letters) / self.total_chars) < 0.8:
+            return 0
+
+        abnormal_chars = sum(
+            self.letters.get(char, 0) for char in self.abnormal_char_index)
+
+        if 0.2 < (abnormal_chars / self.total_chars):
+            return 0
+        # ---Full scorer---
 
         # Count alphabet character frequencies (lowerify uppercase letters).
         observed_instances = [
