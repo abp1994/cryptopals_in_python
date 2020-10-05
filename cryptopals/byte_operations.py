@@ -1,5 +1,6 @@
 import secrets
 from collections import Counter
+from itertools import chain
 
 import numpy as np
 from scipy.stats import chisquare
@@ -66,50 +67,47 @@ class text_scorer:
     ]
 
     expected_frequencies = [row[1] for row in char_frequencies]
+    #alphabet_char_index = chain(range(65, 91), range(97, 123))
+    alphabet_char_index = list(range(65, 91)) + list(range(97, 123))
+    #unlikely_char_index = chain(range(0, 65), range(91, 97), range(123, 128))
+    unlikely_char_index = [12, 15] + list(range(32, 65)) + list(range(
+        91, 97)) + list(range(123, 127))
+    very_unlikely_char_index = list(range(0, 10)) + list(range(11, 13)) + list(
+        range(14, 32)) + list(range(127, 256))
 
     def __init__(self, byte_array):
         self.byte_array = byte_array
+        self.total_chars = len(byte_array)
+        self.letters = Counter(byte_array)
 
     def score(self):
+
         # ---Prescreen---
-        letter_count = 0
-        abnormal_char_count = 0
-        for char in self.byte_array:
-            # Count alphabet characters.
-            if 64 < char < 91 or 96 < char < 123 or char == 32:
-                letter_count += 1
+        very_unlikely_chars = sum(
+            self.letters.get(char, 0)
+            for char in self.very_unlikely_char_index)
+        if 0 < very_unlikely_chars:
+            return 0
 
-            # Count abnormal chars (not including tab type chars).
-            if not (8 < char < 16 or 31 < char < 127):
-                abnormal_char_count += 1
+        unlikely_chars = sum(
+            self.letters.get(char, 0) for char in self.unlikely_char_index)
 
-        letter_proportion = letter_count / len(self.byte_array)
-        abnormal_char_proportion = abnormal_char_count / len(self.byte_array)
-
-        # Check string is of of good quality otherwise exit.
-        if letter_proportion < 0.8 or 0.2 < abnormal_char_proportion:
+        if 0.4 < unlikely_chars / self.total_chars:
             return 0
 
         # ---Full scorer---
-        observed_frequencies = np.zeros(26)
+        letters = [
+            self.letters.get(char, 0) for char in self.alphabet_char_index
+        ]
 
-        # Make bytearray of only lowercase letters (lowerify uppercase letters).
-        alphabet_bytes = bytearray()
-        for char in self.byte_array:
-            if 96 < char < 123:
-                alphabet_bytes.append(char)
-            elif 64 < char < 91:
-                alphabet_bytes.append(char + 22)
-
-        # Count alphabet character frequencies.
-        char_instances = list(Counter(alphabet_bytes).items())
-
-        for char, frequency in char_instances:
-            observed_frequencies[char - 97] = frequency
+        # Count alphabet character frequencies (lowerify uppercase letters).
+        observed_instances = [
+            a + b for a, b in zip(letters[0:26], letters[26:52])
+        ]
 
         # Normalise observed_frequencies.
-        observed_frequencies = observed_frequencies / np.sum(
-            observed_frequencies)
+        total = sum(observed_instances)
+        observed_frequencies = [a / total for a in observed_instances]
 
         # Return goodness of fit.
         return chisquare(observed_frequencies, self.expected_frequencies)[1]
