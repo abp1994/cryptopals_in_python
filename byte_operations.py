@@ -1,8 +1,9 @@
-import secrets
-import numpy as np
 import concurrent.futures
-#import multiprocessing as mp
+import multiprocessing as mp
+import secrets
 from collections import Counter
+
+import numpy as np
 from scipy.stats import chisquare
 
 
@@ -22,7 +23,6 @@ def attempt_crack(data):
     char, ciphertext = data
     byte = bytes([char])
     score = text_scorer(single_byte_xor(byte, ciphertext))
-    #print(score, byte)
     return score, byte
 
 
