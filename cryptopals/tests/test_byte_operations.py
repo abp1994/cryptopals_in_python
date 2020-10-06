@@ -2,8 +2,8 @@ import os
 import sys
 import unittest
 
-#sys.path.append(os.path.abspath(os.path.join('..', 'cryptopals')))
-from .. import byte_operations as bo
+sys.path.append(os.path.abspath('cryptopals'))
+import byte_operations as bo
 
 
 class Testbyte_operations(unittest.TestCase):
