@@ -1,2 +1,3 @@
 .vscode
 cryptopals/__pycache__/
+tests/__pycache__/
