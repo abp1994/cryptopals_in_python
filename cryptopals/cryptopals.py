@@ -5,6 +5,7 @@ import pstats
 import secrets
 import time
 from collections import Counter
+from pathlib import Path
 
 import numpy as np
 from cryptography.hazmat.backends import default_backend
@@ -14,7 +15,7 @@ import byte_operations as bo
 
 
 def import_data(file_name):
-    file_path = os.path.join(os.path.dirname(__file__), "../data/", file_name)
+    file_path = str(Path(__file__).resolve().parents[1] / "data/" / file_name)
     with open(file_path) as f:
         return f.read()
 
