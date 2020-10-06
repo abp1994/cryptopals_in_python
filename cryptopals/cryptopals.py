@@ -1,6 +1,5 @@
 import base64 as b64
 import cProfile
-import os
 import pstats
 import secrets
 import time
