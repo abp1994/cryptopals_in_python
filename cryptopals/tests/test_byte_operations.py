@@ -1,8 +1,8 @@
-import os
 import sys
 import unittest
+from pathlib import Path
 
-sys.path.append(os.path.abspath('cryptopals'))
+sys.path.append(str(Path(__file__).resolve().parents[1]))
 import byte_operations as bo
 
 
