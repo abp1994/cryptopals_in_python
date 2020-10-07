@@ -20,7 +20,7 @@ setup(
     # There are some restrictions on what makes a valid project name
     # specification here:
     # https://packaging.python.org/specifications/core-metadata/#name
-    name='cryptopals_abp',  # Required
+    name='cryptopals',  # Required
 
     # Versions should comply with PEP 440:
     # https://www.python.org/dev/peps/pep-0440/
@@ -69,7 +69,7 @@ setup(
 
     # This should be a valid email address corresponding to the author listed
     # above.
-    author_email='author@example.com',  # Optional
+    #author_email='author@example.com',  # Optional
 
     # Classifiers help users find your project by categorizing it.
     #
@@ -109,7 +109,7 @@ setup(
 
     # When your source code is in a subdirectory under the project root, e.g.
     # `src/`, it is necessary to specify the `package_dir` argument.
-    package_dir={'': 'cryptopals'},  # Optional
+    package_dir={},  # Optional
 
     # You can just specify package directories manually here if your project is
     # simple. Or you can use find_packages().
@@ -120,6 +120,7 @@ setup(
     #
     #   py_modules=["my_module"],
     #
+
     packages=find_packages(),  # Required
 
     # Specify which Python versions you support. In contrast to the
@@ -157,9 +158,9 @@ setup(
 
     # If there are data files included in your packages that need to be
     # installed, specify them here.
-    #package_data={  # Optional
-    #    'sample': ['package_data.dat'],
-    #},
+    package_data={  # Optional
+        'cryptopals': ['README.md'],
+    },
 
     # Although 'package_data' is the preferred approach, in some case you may
     # need to place data files outside of your packages. See:
@@ -177,7 +178,7 @@ setup(
     # executes the function `main` from this package when invoked:
     entry_points={  # Optional
         'console_scripts': [
-            'cryptopals=cryptopals:main',
+            'run_cryptopals=cryptopals.cryptopals:main',
         ],
     },
 
