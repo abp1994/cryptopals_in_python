@@ -136,7 +136,8 @@ setup(
     # https://packaging.python.org/en/latest/requirements.html
     install_requires=['cryptography~=3.0',
                       'numpy~=1.19.1',
-                      'setuptools~=41.2.0'
+                      'setuptools~=41.2.0',
+                      'scipy~=1.5.2',
                       ],  # Optional
 
     # List additional groups of dependencies here (e.g. development
