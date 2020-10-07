@@ -2,6 +2,7 @@ import base64 as b64
 import cProfile
 import pstats
 import secrets
+import sys
 import time
 from collections import Counter
 from pathlib import Path
@@ -519,6 +520,7 @@ def main():
     print("\n\n-- The Cryptopals Crypto Challenges in Python by Akaash BP --")
     # https://cryptopals.com
     startTime = time.time()
+    print(sys.path)
     run_challenges()
 
     # profiling stats
