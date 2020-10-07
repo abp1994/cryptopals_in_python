@@ -1,3 +1,4 @@
 .vscode
+venv/
 cryptopals/__pycache__/
 cryptopals/tests/__pycache__/
