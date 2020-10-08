@@ -1,4 +1,6 @@
+import cProfile
 import os
+import pstats
 import sys
 from pathlib import Path
 
@@ -23,3 +25,12 @@ def encode(text):
 
 def decode(byte_array):
     return byte_array.decode("utf-8")
+
+
+def function_stats(function):
+    profile = cProfile.Profile()
+    ut.blockPrint()
+    profile.run(function)
+    ut.enablePrint()
+    ps = pstats.Stats(profile)
+    ps.print_stats()

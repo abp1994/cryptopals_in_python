@@ -1,7 +1,4 @@
 import base64 as b64
-import cProfile
-import os
-import pstats
 import secrets
 import sys
 import time
@@ -504,15 +501,6 @@ def run_challenges():
     set_2.challenge_13()
     set_2.challenge_14()
     set_2.challenge_15()
-
-
-def function_stats(function):
-    profile = cProfile.Profile()
-    ut.blockPrint()
-    profile.run(function)
-    ut.enablePrint()
-    ps = pstats.Stats(profile)
-    ps.print_stats()
 
 
 def main():
