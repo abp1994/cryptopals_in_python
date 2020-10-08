@@ -1,5 +1,6 @@
 import base64 as b64
 import cProfile
+import os
 import pstats
 import secrets
 import sys
@@ -517,18 +518,31 @@ def run_challenges():
     set_2.challenge_15()
 
 
+def function_stats(function):
+    profile = cProfile.Profile()
+    profile.run(function)
+    ps = pstats.Stats(profile)
+    ps.print_stats()
+
+
+def blockPrint():
+    sys.stdout = open(os.devnull, 'w')
+
+
+def enablePrint():
+    sys.stdout = sys.__stdout__
+
+
 def main():
     print("\n\n-- The Cryptopals Crypto Challenges in Python by Akaash BP --")
     # https://cryptopals.com
     startTime = time.time()
-    print(sys.path)
-    run_challenges()
 
-    # profiling stats
-    '''profile = cProfile.Profile()
-    profile.runcall(run_challenges)
-    ps = pstats.Stats(profile)
-    ps.print_stats() '''
+    # profiling stat options
+    # function_stats('set_1.challenge_4()')
+    # print(sys.path)
+
+    run_challenges()
 
     executionTime = (time.time() - startTime)
     print(f'\nExecution time in seconds: {executionTime}')
