@@ -14,20 +14,8 @@ from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 
 sys.path.append(str(Path(__file__).parent.resolve()))
 import byte_operations as bo
-
-
-def import_data(file_name):
-    file_path = str(Path(__file__).parent.resolve() / "data/" / file_name)
-    with open(file_path) as f:
-        return f.read()
-
-
-def encode(text):
-    return text.encode("utf-8")
-
-
-def decode(byte_array):
-    return byte_array.decode("utf-8")
+import utils as ut
+from utils import decode, encode
 
 
 def profile_create(email):
@@ -135,7 +123,7 @@ class C11_ECB_oracle:
 class C12_ECB_oracle:
     def __init__(self):
         self.key = bo.random_AES_key()
-        self.secret = b64.b64decode(import_data("data_S2C12.txt"))
+        self.secret = b64.b64decode(ut.import_data("data_S2C12.txt"))
 
     def encrypt(self, prepend):
         data = bo.pad(16, prepend + self.secret)
@@ -194,7 +182,7 @@ class set_1:
         print("\n-- Challenge 4 - Detect single-char XOR --")
 
         file_name = "data_S1C4.txt"
-        hex_ciphertext = import_data(file_name)
+        hex_ciphertext = ut.import_data(file_name)
 
         def text_breaker():
             for line_index, line in enumerate(hex_ciphertext.splitlines()):
@@ -238,7 +226,7 @@ class set_1:
         print(f"Edit distance : {bo.edit_distance(data_1, data_2)}")
         print(f"-- Part 2 --")
 
-        B64_ciphertext = import_data("data_S1C6.txt")
+        B64_ciphertext = ut.import_data("data_S1C6.txt")
         data = b64.b64decode(B64_ciphertext)
         likely_key_sizes = bo.find_key_size(40, data)
 
@@ -262,7 +250,7 @@ class set_1:
         print(f"\n-- Challenge 7 - AES in ECB mode --")
 
         key = encode("YELLOW SUBMARINE")
-        data = b64.b64decode(import_data("data_S1C7.txt"))
+        data = b64.b64decode(ut.import_data("data_S1C7.txt"))
         plaintext = AES_ECB(key).decrypt(data)
 
         print(f"Key    : {decode(key)}")
@@ -273,7 +261,7 @@ class set_1:
         print(f"\n-- Challenge 8 - Detect AES in ECB mode --")
         print(f"-- Method 1 --")
 
-        hex_ciphertext = import_data("data_S1C8.txt")
+        hex_ciphertext = ut.import_data("data_S1C8.txt")
 
         def text_breaker():
             for line_index, line in enumerate(hex_ciphertext.splitlines()):
@@ -332,7 +320,7 @@ class set_2:
         print(f"CBC decrypted message : {CBC_plaintext}")
         print("----- Part 2 ------")
 
-        data = b64.b64decode(import_data("data_S2C10.txt"))
+        data = b64.b64decode(ut.import_data("data_S2C10.txt"))
         key = b"YELLOW SUBMARINE"
         iv = bytes([0]) * 16
 
@@ -520,17 +508,11 @@ def run_challenges():
 
 def function_stats(function):
     profile = cProfile.Profile()
+    ut.blockPrint()
     profile.run(function)
+    ut.enablePrint()
     ps = pstats.Stats(profile)
     ps.print_stats()
-
-
-def blockPrint():
-    sys.stdout = open(os.devnull, 'w')
-
-
-def enablePrint():
-    sys.stdout = sys.__stdout__
 
 
 def main():
