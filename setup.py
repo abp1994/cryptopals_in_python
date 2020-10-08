@@ -180,7 +180,7 @@ setup(
         'console_scripts': [
             'run_cryptopals=cryptopals.cryptopals:main',
         ],
-    },
+    },s
 
     # List additional URLs that are relevant to your project as a dict.
     #
