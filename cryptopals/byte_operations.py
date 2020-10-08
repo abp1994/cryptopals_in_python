@@ -68,11 +68,7 @@ class text_scorer:
     ]
 
     expected_frequencies = [row[1] for row in char_frequencies]
-    letter_char_index = list(range(65, 91)) + list(range(97, 123)) + [32]
-    letter_char_index2 = list(range(97, 123))
-    abnormal_char_index = list(range(0, 9)) + list(range(16, 32)) + list(
-        range(127, 256))
-
+    letter_ascii_index = list(range(97, 123))
     non_alphabet_chars = re.compile(b'[^a-zA-Z]+')
     desireable_chars = re.compile(b'''[\w\s,.'!-"\(\)\&%@#~-]''')
 
@@ -103,7 +99,7 @@ class text_scorer:
         case_independent_letters = Counter(letter_instances.lower())
         case_independent_letter_instances = [
             case_independent_letters.get(char, 0)
-            for char in self.letter_char_index2
+            for char in self.letter_ascii_index
         ]
 
         # Normalise letter instances.
