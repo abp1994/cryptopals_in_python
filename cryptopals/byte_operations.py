@@ -1,3 +1,4 @@
+import re
 import secrets
 from collections import Counter
 from itertools import chain
@@ -68,10 +69,15 @@ class text_scorer:
 
     expected_frequencies = [row[1] for row in char_frequencies]
     letter_char_index = list(range(65, 91)) + list(range(97, 123)) + [32]
+    letter_char_index2 = list(range(97, 123))
     abnormal_char_index = list(range(0, 9)) + list(range(16, 32)) + list(
         range(127, 256))
 
+    non_alphabet_chars = re.compile(b'[^a-zA-Z]+')
+    desireable_chars = re.compile(b'''[\w\s,.'!-"\(\)\&%@#~-]''')
+
     def __init__(self, byte_array):
+        self.byte_array = byte_array
         self.total_chars = len(byte_array)
         self.char_instances = Counter(byte_array)
 
@@ -79,18 +85,14 @@ class text_scorer:
 
         # ---Prescreen---
         # check for high letter proportion
-        letter_instances = [
-            self.char_instances.get(char, 0) for char in self.letter_char_index
-        ]
+        letter_instances = self.non_alphabet_chars.sub(b'', self.byte_array)
 
         if (sum(letter_instances) / self.total_chars) < 0.8:
             return 0
 
         # check for low abnormal character proportion
-        abnormal_char_instances = {
-            self.char_instances.get(char, 0)
-            for char in self.abnormal_char_index
-        }
+        abnormal_char_instances = self.desireable_chars.sub(
+            b'', self.byte_array)
 
         if 0.2 < (sum(abnormal_char_instances) / self.total_chars):
             return 0
@@ -98,9 +100,10 @@ class text_scorer:
         # ---Full scorer---
 
         # Count letter instances independent of case.
+        case_independent_letters = Counter(letter_instances.lower())
         case_independent_letter_instances = [
-            a + b
-            for a, b in zip(letter_instances[0:26], letter_instances[26:52])
+            case_independent_letters.get(char, 0)
+            for char in self.letter_char_index2
         ]
 
         # Normalise letter instances.
