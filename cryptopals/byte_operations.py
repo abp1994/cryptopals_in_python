@@ -75,7 +75,6 @@ class text_scorer:
     def __init__(self, byte_array):
         self.byte_array = byte_array
         self.total_chars = len(byte_array)
-        self.char_instances = Counter(byte_array)
 
     def score(self):
 
