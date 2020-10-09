@@ -517,6 +517,9 @@ def main():
     executionTime = (time.time() - startTime)
     print(f'\nExecution time in seconds: {executionTime}')
 
+    print("Press return to exit.")
+    input()
+
 
 if __name__ == "__main__":
     main()
