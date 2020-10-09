@@ -1,5 +1,6 @@
 .vscode
 venv/
+venv2/
 cryptopals.egg-info/
 cryptopals/__pycache__/
 cryptopals/tests/__pycache__/
