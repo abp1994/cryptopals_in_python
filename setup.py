@@ -159,7 +159,6 @@ setup(
     # If there are data files included in your packages that need to be
     # installed, specify them here.
     package_data={  # Optional
-        'cryptopals': ['README.md'],
     },
 
     # Although 'package_data' is the preferred approach, in some case you may
@@ -180,7 +179,7 @@ setup(
         'console_scripts': [
             'run_cryptopals=cryptopals.cryptopals:main',
         ],
-    },s
+    },
 
     # List additional URLs that are relevant to your project as a dict.
     #
@@ -197,4 +196,5 @@ setup(
         #'Say Thanks!': 'http://saythanks.io/to/example',
         'Source': 'https://github.com/abp1994/cryptopals_in_python',
     },
+    include_package_data=True,
 )
