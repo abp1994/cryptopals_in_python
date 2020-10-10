@@ -220,9 +220,10 @@ class set_2:
               "Byte-at-a-time ECB decryption (Simple) --")
 
         oracle = ocl.C12()
-        block_size = ocl.find_block_size(oracle)
+        block_size, position_in_block = ocl.find_block_size(oracle)
 
         print(f"Determined oracle block size : {block_size}")
+        print(f"Input position along block   : {position_in_block}")
         print(f"Oracle using ECB mode?       : {ocl.ECB_check(oracle)}")
 
         decryption = b""
@@ -239,7 +240,7 @@ class set_2:
                 model_bytes = oracle.encrypt(
                     b"0" * (byte_position))[block_start:block_end]
 
-                # test all possible characters against model_byte
+                # Test all possible characters against model_byte
                 for char in range(256):
                     byte = bytes([char])
                     if model_bytes == oracle.encrypt(
@@ -270,10 +271,10 @@ class set_2:
         base_encryption_len = len(base_encryption)
         base_decryption = ocl.profile_decrypt(base_encryption)
 
-        print(f"Base email        : {base_email}")
-        print(f"Encrypted profile : {base_encryption}")
-        print(f"Encrypted size    : {base_encryption_len}")
-        print(f"Decrypted data    : {base_decryption}")
+        print(f"Base email         : {base_email}")
+        print(f"Encrypted profile  : {base_encryption}")
+        print(f"Encrypted size     : {base_encryption_len}")
+        print(f"Decrypted data     : {base_decryption}")
 
         # Create an email that creates a whole new block in output.
         end_align_email = base_email
@@ -305,7 +306,7 @@ class set_2:
         while not bo.ECB_mode_check(ocl.profile_create(position_email)):
             position_email = "c" + position_email
 
-        print(f"Position finding email : {position_email}")
+        print(f"Position finding email       : {position_email}")
 
         # Find position at which duplicated block starts changing.
         position = 0
@@ -316,15 +317,15 @@ class set_2:
             position += 1
         position -= 1
 
-        print(f"Position finding email  : {position_email}")
-        print(f"Position of block start : {position}")
+        print(f"Position finding email       : {position_email}")
+        print(f"Position of block start      : {position}")
 
         bytes_to_add = position - len(base_email)
         if bytes_to_add < 0: bytes_to_add += 16
         block_end_email = ("e" * bytes_to_add) + base_email
 
-        print(f"Bytes to add to email : {bytes_to_add}")
-        print(f"Email ending block    : {block_end_email}")
+        print(f"Bytes to add to email        : {bytes_to_add}")
+        print(f"Email ending block           : {block_end_email}")
 
         # Craft new ending for encrypted data.
         new_end = decode(bo.pad(16, b"admin"))
@@ -332,9 +333,9 @@ class set_2:
         cut = ocl.profile_create(new_end_encryption_email)[32:48]
         decrypted_cut = ocl.profile_decrypt(cut)
 
-        print(f"new end encrypting email : {new_end_encryption_email}")
-        print(f"new ending encryption    : {cut}")
-        print(f"new ending decrypted     : {decrypted_cut}")
+        print(f"new end encrypting email     : {new_end_encryption_email}")
+        print(f"new ending encryption        : {cut}")
+        print(f"new ending decrypted         : {decrypted_cut}")
 
         attacker_encrypted_profile = crop + cut
         attacker_decrypted_profile = ocl.profile_decrypt(
@@ -342,14 +343,28 @@ class set_2:
         attacker_profile = ocl.profile_unpack(
             bo.depad(attacker_decrypted_profile))
 
-        print(f"Attacker encrypted profile : {attacker_encrypted_profile}")
-        print(f"Attacker decrypted profile : {attacker_decrypted_profile}")
-        print(f"Attacker  profile          : {attacker_profile}")
+        print(f"Attacker encrypted profile   : {attacker_encrypted_profile}")
+        print(f"Attacker decrypted profile   : {attacker_decrypted_profile}")
+        print(f"Attacker  profile            : {attacker_profile}")
 
     @staticmethod
     def challenge_14():
         print(f"\n-- Challenge 14 - Byte-at-a-time ECB decryption (Harder) --")
-        print(f"To be completed!")
+
+        oracle = ocl.C14()
+        block_size, position_in_block = ocl.find_block_size(oracle)
+        original_output = oracle.encrypt(b"")
+
+        print(f"Determined oracle block size : {block_size}")
+        print(f"Input position along block   : {position_in_block}")
+        print(f"Oracle using ECB mode?       : {ocl.ECB_check(oracle)}")
+        print(f"Size of output               : {len(original_output)}")
+
+        print(f"To be completed...!")
+
+        # Find initial output size.
+
+        # Find number of bytes to create a new output
 
     @staticmethod
     def challenge_15():

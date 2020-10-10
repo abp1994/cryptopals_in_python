@@ -81,6 +81,16 @@ class C12:
         return AES_ECB(self.key).encrypt(data)
 
 
+class C14:
+    def __init__(self):
+        self.random_prefix = secrets.token_bytes(secrets.randbelow(16) + 16)
+        self.oracle = C12()
+
+    def encrypt(self, user_bytes):
+        combination = b''.join([self.random_prefix, user_bytes])
+        return self.oracle.encrypt(combination)
+
+
 def profile_create(email):
     data = profile_parse(email)
     padded_data = bo.pad(16, data)
@@ -122,4 +132,6 @@ def find_block_size(oracle):
         output_size = len(oracle.encrypt(bytestring))
         if 100 < len(bytestring):
             raise StopIteration("Indeterminable block size")
-    return output_size - initial_output_size
+        block_size = output_size - initial_output_size
+        position_in_block = block_size - len(bytestring)
+    return block_size, position_in_block
