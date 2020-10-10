@@ -1,130 +1,14 @@
 import base64 as b64
-import secrets
 import sys
 import time
 from collections import Counter
 from pathlib import Path
 
-import numpy as np
-from cryptography.hazmat.backends import default_backend
-from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
-
 sys.path.append(str(Path(__file__).parent.resolve()))
 import byte_operations as bo
+import oracles as ocl
 import utils as ut
 from utils import decode, encode
-
-
-def profile_create(email):
-    data = profile_parse(email)
-    padded_data = bo.pad(16, data)
-    return AES_ECB(b"PASSWORDPASSWORD").encrypt(padded_data)
-
-
-def profile_parse(email):
-    if 0 < sum(map(email.count, ("=", "&"))):
-        raise Exception("Invalid character encountered")
-    return encode(f"email={email}&uid=10&role=user")
-
-
-def profile_decrypt(data):
-    return AES_ECB(b"PASSWORDPASSWORD").decrypt(data)
-
-
-def profile_unpack(data):
-    return {
-        decode(key): decode(value)
-        for key, value in (line.split(b"=") for line in data.split(b"&"))
-    }
-
-
-def ECB_mode_check_2(oracle):
-    data = oracle.encrypt(b"0" * 50)
-    blocks = np.frombuffer(data, dtype="uint8").reshape(-1, 16)
-    duplicate_blocks = len(blocks) - len(np.unique(blocks, axis=0))
-    return True if 0 < duplicate_blocks else False
-
-
-def find_block_size(oracle):
-    # Encrypt increasingly long byte strings until output changes size.
-    # Record change in size of output.
-    initial_output_size = len(oracle.encrypt(b""))
-    output_size = initial_output_size
-    bytestring = b""
-    while output_size == initial_output_size:
-        bytestring += b"0"
-        output_size = len(oracle.encrypt(bytestring))
-        if 100 < len(bytestring):
-            raise StopIteration("Indeterminable block size")
-    return output_size - initial_output_size
-
-
-class AES_ECB:
-    def __init__(self, key):
-        self.cipher = Cipher(algorithms.AES(key),
-                             modes.ECB(),
-                             backend=default_backend())
-
-    def encrypt(self, data):
-        encryptor = self.cipher.encryptor()
-        return encryptor.update(data) + encryptor.finalize()
-
-    def decrypt(self, data):
-        decryptor = self.cipher.decryptor()
-        return decryptor.update(data) + decryptor.finalize()
-
-
-class AES_CBC:
-    def __init__(self, iv, key):
-        self.iv = iv
-        self.key = key
-
-    def encrypt(self, data):
-        iv = self.iv
-        output_message = b""
-        input_message = np.frombuffer(data, dtype="uint8").reshape(-1, 16)
-        for block in input_message:
-            step_1 = bo.xor(iv, block)
-            iv = AES_ECB(self.key).encrypt(step_1)
-            output_message += iv
-        return output_message
-
-    def decrypt(self, data):
-        iv = self.iv
-        output_message = b""
-        input_message = np.frombuffer(data, dtype="uint8").reshape(-1, 16)
-        for block in input_message:
-            step_1 = AES_ECB(self.key).decrypt(block)
-            output_message += bo.xor(iv, step_1)
-            iv = block
-        return output_message
-
-
-class C11_ECB_oracle:
-    def encrypt(self, data):
-        data = secrets.token_bytes(
-            secrets.randbelow(5)) + data + secrets.token_bytes(
-                secrets.randbelow(5))
-        data_padded = bo.pad(16, data)
-        if secrets.choice([True, False]):
-            mode = "ECB"
-            result = AES_ECB(bo.random_AES_key()).encrypt(data_padded)
-        else:
-            mode = "CBC"
-            result = AES_CBC(secrets.token_bytes(16),
-                             bo.random_AES_key()).encrypt(data_padded)
-        print(f"Oracle mode used   : {mode}")
-        return result
-
-
-class C12_ECB_oracle:
-    def __init__(self):
-        self.key = bo.random_AES_key()
-        self.secret = b64.b64decode(ut.import_data("data_S2C12.txt"))
-
-    def encrypt(self, prepend):
-        data = bo.pad(16, prepend + self.secret)
-        return AES_ECB(self.key).encrypt(data)
 
 
 class set_1:
@@ -248,7 +132,7 @@ class set_1:
 
         key = encode("YELLOW SUBMARINE")
         data = b64.b64decode(ut.import_data("data_S1C7.txt"))
-        plaintext = AES_ECB(key).decrypt(data)
+        plaintext = ocl.AES_ECB(key).decrypt(data)
 
         print(f"Key    : {decode(key)}")
         print(f"Secret : \n{decode(plaintext[:90])}...")
@@ -300,8 +184,8 @@ class set_2:
         key = b"PASSWORDPASSWORD"
         iv = b"1122334455667788"
 
-        ECB_1 = AES_ECB(key)
-        CBC_1 = AES_CBC(iv, key)
+        ECB_1 = ocl.AES_ECB(key)
+        CBC_1 = ocl.AES_CBC(iv, key)
 
         ECB_ciphertext = ECB_1.encrypt(data_p)
         ECB_plaintext = bo.depad(ECB_1.decrypt(ECB_ciphertext))
@@ -320,9 +204,7 @@ class set_2:
         data = b64.b64decode(ut.import_data("data_S2C10.txt"))
         key = b"YELLOW SUBMARINE"
         iv = bytes([0]) * 16
-
-        CBC_2 = AES_CBC(iv, key)
-
+        CBC_2 = ocl.AES_CBC(iv, key)
         decrypted = decode(bo.depad(CBC_2.decrypt(data)))
         print(f"CBC decrypted message : \n{decrypted[0:90]}...")
 
@@ -330,18 +212,20 @@ class set_2:
     def challenge_11():
         print(f"\n-- Challenge 11 - An ECB/CBC detection oracle --")
         print(f"Random AES Key     : {bo.random_AES_key()}")
-        print(f"ECB mode detected? : {ECB_mode_check_2(C11_ECB_oracle())}")
+        print(
+            f"ECB mode detected? : {ocl.ECB_mode_check_2(ocl.C11_ECB_oracle())}"
+        )
 
     @staticmethod
     def challenge_12():
         print(f"\n-- Challenge 12 - "
               "Byte-at-a-time ECB decryption (Simple) --")
 
-        oracle = C12_ECB_oracle()
-        block_size = find_block_size(oracle)
+        oracle = ocl.C12_ECB_oracle()
+        block_size = ocl.find_block_size(oracle)
 
         print(f"Determined oracle block size : {block_size}")
-        print(f"Oracle using ECB mode?       : {ECB_mode_check_2(oracle)}")
+        print(f"Oracle using ECB mode?       : {ocl.ECB_mode_check_2(oracle)}")
 
         decryption = b""
         data_size = len(oracle.encrypt(b""))
@@ -374,19 +258,19 @@ class set_2:
 
         text = """foo=bar&baz=qux&zap=zazzle"""
         email = "hello@world.com"
-        parsed = profile_parse(email)
+        parsed = ocl.profile_parse(email)
 
         print(f"Example string   : {text}")
-        print(f"Unpacked profile : {profile_unpack(encode(text))}")
+        print(f"Unpacked profile : {ocl.profile_unpack(encode(text))}")
         print(f"Example Email    : {email}")
         print(f"Parsed profile   : {parsed}")
-        print(f"Unpacked profile : {profile_unpack(parsed)}")
+        print(f"Unpacked profile : {ocl.profile_unpack(parsed)}")
         print(f"-- Part 2 --")
 
         base_email = "user@hack.com"
-        base_encryption = profile_create(base_email)
+        base_encryption = ocl.profile_create(base_email)
         base_encryption_len = len(base_encryption)
-        base_decryption = profile_decrypt(base_encryption)
+        base_decryption = ocl.profile_decrypt(base_encryption)
 
         print(f"Base email        : {base_email}")
         print(f"Encrypted profile : {base_encryption}")
@@ -398,7 +282,7 @@ class set_2:
         end_align_encryption = base_encryption
         while len(end_align_encryption) == base_encryption_len:
             end_align_email = "a" + end_align_email
-            end_align_encryption = profile_create(end_align_email)
+            end_align_encryption = ocl.profile_create(end_align_email)
         end_align_encryption_len = len(end_align_encryption)
 
         print(f"End aligning email : {end_align_email}")
@@ -408,8 +292,8 @@ class set_2:
         # Add bytes to push unwanted data from encryption into end block and crop useful blocks.
         bytes_to_remove = len(b"user")
         crop_email = ("b" * bytes_to_remove) + end_align_email
-        crop = profile_create(crop_email)[0:48]
-        decryption = profile_decrypt(crop)
+        crop = ocl.profile_create(crop_email)[0:48]
+        decryption = ocl.profile_decrypt(crop)
 
         print(f"bytes to push into new block : {bytes_to_remove}")
         print(f"Crop aligning email          : {crop_email}")
@@ -420,14 +304,14 @@ class set_2:
         # Create an email that shows its position in the encryption.
         position_email = base_email
         # Look for two identical blocks in encryption.
-        while not bo.ECB_mode_check(profile_create(position_email)):
+        while not bo.ECB_mode_check(ocl.profile_create(position_email)):
             position_email = "c" + position_email
 
         print(f"Position finding email : {position_email}")
 
         # Find position at which duplicated block starts changing.
         position = 0
-        while bo.ECB_mode_check(profile_create(position_email)):
+        while bo.ECB_mode_check(ocl.profile_create(position_email)):
             position_email_list = list(position_email)
             position_email_list[position] = "d"
             position_email = "".join(position_email_list)
@@ -447,17 +331,18 @@ class set_2:
         # Craft new ending for encrypted data.
         new_end = decode(bo.pad(16, b"admin"))
         new_end_encryption_email = block_end_email + new_end
-        cut = profile_create(new_end_encryption_email)[32:48]
-        decrypted_cut = profile_decrypt(cut)
+        cut = ocl.profile_create(new_end_encryption_email)[32:48]
+        decrypted_cut = ocl.profile_decrypt(cut)
 
         print(f"new end encrypting email : {new_end_encryption_email}")
         print(f"new ending encryption    : {cut}")
         print(f"new ending decrypted     : {decrypted_cut}")
 
         attacker_encrypted_profile = crop + cut
-        attacker_decrypted_profile = profile_decrypt(
+        attacker_decrypted_profile = ocl.profile_decrypt(
             attacker_encrypted_profile)
-        attacker_profile = profile_unpack(bo.depad(attacker_decrypted_profile))
+        attacker_profile = ocl.profile_unpack(
+            bo.depad(attacker_decrypted_profile))
 
         print(f"Attacker encrypted profile : {attacker_encrypted_profile}")
         print(f"Attacker decrypted profile : {attacker_decrypted_profile}")
