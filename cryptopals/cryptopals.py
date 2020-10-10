@@ -1,6 +1,6 @@
-import base64 as b64
 import sys
 import time
+from base64 import b64decode, b64encode
 from collections import Counter
 from pathlib import Path
 
@@ -20,7 +20,7 @@ class set_1:
             "49276d206b696c6c696e6720796f757220627261696e206c696b65"
             "206120706f69736f6e6f7573206d757368726f6f6d")
         data = bytes.fromhex(hex_ciphertext)
-        B64_encode = b64.b64encode(data)
+        B64_encode = b64encode(data)
 
         print(f"Hex ciphertext : {hex_ciphertext}")
         print(f"Plaintext      : {decode(data)}")
@@ -108,7 +108,7 @@ class set_1:
         print(f"-- Part 2 --")
 
         B64_ciphertext = ut.import_data("data_S1C6.txt")
-        data = b64.b64decode(B64_ciphertext)
+        data = b64decode(B64_ciphertext)
         likely_key_sizes = bo.find_key_size(40, data)
 
         # Find most likely key.
@@ -131,7 +131,7 @@ class set_1:
         print(f"\n-- Challenge 7 - AES in ECB mode --")
 
         key = encode("YELLOW SUBMARINE")
-        data = b64.b64decode(ut.import_data("data_S1C7.txt"))
+        data = b64decode(ut.import_data("data_S1C7.txt"))
         plaintext = ocl.AES_ECB(key).decrypt(data)
 
         print(f"Key    : {decode(key)}")
@@ -201,7 +201,7 @@ class set_2:
         print(f"CBC decrypted message : {CBC_plaintext}")
         print("----- Part 2 ------")
 
-        data = b64.b64decode(ut.import_data("data_S2C10.txt"))
+        data = b64decode(ut.import_data("data_S2C10.txt"))
         key = b"YELLOW SUBMARINE"
         iv = bytes([0]) * 16
         CBC_2 = ocl.AES_CBC(iv, key)
@@ -212,20 +212,18 @@ class set_2:
     def challenge_11():
         print(f"\n-- Challenge 11 - An ECB/CBC detection oracle --")
         print(f"Random AES Key     : {bo.random_AES_key()}")
-        print(
-            f"ECB mode detected? : {ocl.ECB_mode_check_2(ocl.C11_ECB_oracle())}"
-        )
+        print(f"ECB mode detected? : {ocl.ECB_check(ocl.C11())}")
 
     @staticmethod
     def challenge_12():
         print(f"\n-- Challenge 12 - "
               "Byte-at-a-time ECB decryption (Simple) --")
 
-        oracle = ocl.C12_ECB_oracle()
+        oracle = ocl.C12()
         block_size = ocl.find_block_size(oracle)
 
         print(f"Determined oracle block size : {block_size}")
-        print(f"Oracle using ECB mode?       : {ocl.ECB_mode_check_2(oracle)}")
+        print(f"Oracle using ECB mode?       : {ocl.ECB_check(oracle)}")
 
         decryption = b""
         data_size = len(oracle.encrypt(b""))

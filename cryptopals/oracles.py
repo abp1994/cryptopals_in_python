@@ -1,6 +1,6 @@
-import base64 as b64
 import secrets
 import sys
+from base64 import b64decode
 from pathlib import Path
 
 import numpy as np
@@ -54,7 +54,7 @@ class AES_CBC:
         return output_message
 
 
-class C11_ECB_oracle:
+class C11:
     def encrypt(self, data):
         data = secrets.token_bytes(
             secrets.randbelow(5)) + data + secrets.token_bytes(
@@ -71,10 +71,10 @@ class C11_ECB_oracle:
         return result
 
 
-class C12_ECB_oracle:
+class C12:
     def __init__(self):
         self.key = bo.random_AES_key()
-        self.secret = b64.b64decode(ut.import_data("data_S2C12.txt"))
+        self.secret = b64decode(ut.import_data("data_S2C12.txt"))
 
     def encrypt(self, prepend):
         data = bo.pad(16, prepend + self.secret)
@@ -104,7 +104,7 @@ def profile_unpack(data):
     }
 
 
-def ECB_mode_check_2(oracle):
+def ECB_check(oracle):
     data = oracle.encrypt(b"0" * 50)
     blocks = np.frombuffer(data, dtype="uint8").reshape(-1, 16)
     duplicate_blocks = len(blocks) - len(np.unique(blocks, axis=0))
