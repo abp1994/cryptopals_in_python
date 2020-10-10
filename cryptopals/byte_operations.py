@@ -36,6 +36,69 @@ def repeating_key_xor(ciphertext, key):
     return bytes([nth_xor(n, byte) for n, byte in enumerate(ciphertext)])
 
 
+def find_key_size(max_size, data):
+    samples = 10
+    normalised_edit_distance = np.zeros([samples])
+    results = []
+
+    for keysize in range(1, max_size):
+        for pair in range(samples):
+
+            # Take adjacent keysize size blocks.
+            ciphertext = data[(2 * pair) * keysize:(2 * pair + 1) * keysize]
+            key = data[(2 * pair + 1) * keysize:(2 * pair + 2) * keysize]
+
+            # Calculate normalised edit distance.
+            normalised_edit_distance[pair] = edit_distance(ciphertext,
+                                                           key) / keysize
+
+        # Store average edit distance for keysize.
+        results.append([np.average(normalised_edit_distance), keysize])
+    return [row[1] for row in sorted(results)]
+
+
+def key_finder(key_size, data):
+
+    # Create list of rectangular size using key_size.
+    lower_multiple = len(data) - (len(data) % key_size)
+    data_array = np.frombuffer(data, dtype="uint8")[0:lower_multiple]
+
+    # Reshape to key_size size rows and transpose.
+    data_array = data_array.reshape(-1, key_size)
+    output_list = [bytes(row.tolist()) for row in data_array.T]
+
+    # Return most promising key of key_size size.
+    return b"".join([single_byte_xor_breaker(item)[1] for item in output_list])
+
+
+def pad(block_size, data):
+    # PKCS#7 padding.
+    if (len(data) % block_size) == 0:
+        data += bytes([block_size]) * block_size
+    else:
+        pad_size = block_size - len(data) % block_size
+        data += bytes([pad_size]) * pad_size
+    return data
+
+
+def depad(data):
+    # PKCS#7 depadding.
+    pad_size = data[-1]
+    if data[-pad_size:] != bytes([pad_size]) * pad_size:
+        raise ValueError("Bad padding encountered!")
+    return data[0:-pad_size]
+
+
+def random_AES_key():
+    return secrets.token_bytes(16)
+
+
+def ECB_mode_check(data):
+    array = np.frombuffer(data, dtype="uint8").reshape(-1, 16)
+    duplicate_blocks = len(array) - len(np.unique(array, axis=0))
+    return True if 0 < duplicate_blocks else False
+
+
 class text_scorer:
     # http://cs.wellesley.edu/~fturbak/codman/letterfreq.html
     char_frequencies = [
@@ -110,66 +173,4 @@ class text_scorer:
         # Return goodness of fit.
         return chisquare(case_independent_letter_frequencies,
                          self.expected_frequencies)[1]
-
-
-def find_key_size(max_size, data):
-    samples = 10
-    normalised_edit_distance = np.zeros([samples])
-    results = []
-
-    for keysize in range(1, max_size):
-        for pair in range(samples):
-
-            # Take adjacent keysize size blocks.
-            ciphertext = data[(2 * pair) * keysize:(2 * pair + 1) * keysize]
-            key = data[(2 * pair + 1) * keysize:(2 * pair + 2) * keysize]
-
-            # Calculate normalised edit distance.
-            normalised_edit_distance[pair] = edit_distance(ciphertext,
-                                                           key) / keysize
-
-        # Store average edit distance for keysize.
-        results.append([np.average(normalised_edit_distance), keysize])
-    return [row[1] for row in sorted(results)]
-
-
-def key_finder(key_size, data):
-
-    # Create list of rectangular size using key_size.
-    lower_multiple = len(data) - (len(data) % key_size)
-    data_array = np.frombuffer(data, dtype="uint8")[0:lower_multiple]
-
-    # Reshape to key_size size rows and transpose.
-    data_array = data_array.reshape(-1, key_size)
-    output_list = [bytes(row.tolist()) for row in data_array.T]
-
-    # Return most promising key of key_size size.
-    return b"".join([single_byte_xor_breaker(item)[1] for item in output_list])
-
-
-def pad(block_size, data):
-    # PKCS#7 padding.
-    if (len(data) % block_size) == 0:
-        data += bytes([block_size]) * block_size
-    else:
-        pad_size = block_size - len(data) % block_size
-        data += bytes([pad_size]) * pad_size
-    return data
-
-
-def depad(data):
-    # PKCS#7 depadding.
-    pad_size = data[-1]
-    if data[-pad_size:] != bytes([pad_size]) * pad_size:
-        raise ValueError("Bad padding encountered!")
-    return data[0:-pad_size]
-
-
-def random_AES_key():
-    return secrets.token_bytes(16)
-
-
-def ECB_mode_check(data):
-    array = np.frombuffer(data, dtype="uint8").reshape(-1, 16)
-    duplicate_blocks = len(array) - len(np.unique(array, axis=0))
-    return True if 0 < duplicate_blocks else False
+                         
