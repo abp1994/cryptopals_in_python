@@ -11,7 +11,7 @@ import utils as ut
 from utils import decode, encode
 
 
-class set_1:
+class Set1:
     @staticmethod
     def challenge_1():
         print("\n-- Challenge 1 - Convert hex to base 64 --")
@@ -132,7 +132,7 @@ class set_1:
 
         key = encode("YELLOW SUBMARINE")
         data = b64decode(ut.import_data("data_S1C7.txt"))
-        plaintext = ocl.AES_ECB(key).decrypt(data)
+        plaintext = ocl.AESECB(key).decrypt(data)
 
         print(f"Key    : {decode(key)}")
         print(f"Secret : \n{decode(plaintext[:90])}...")
@@ -166,7 +166,7 @@ class set_1:
         print(f"Corresponding line            : {line_index2}")
 
 
-class set_2:
+class Set2:
     @staticmethod
     def challenge_9():
         print(f"\n-- Challenge 9 - Implement PKCS#7 padding --")
@@ -184,8 +184,8 @@ class set_2:
         key = b"PASSWORDPASSWORD"
         iv = b"1122334455667788"
 
-        ECB_1 = ocl.AES_ECB(key)
-        CBC_1 = ocl.AES_CBC(iv, key)
+        ECB_1 = ocl.AESECB(key)
+        CBC_1 = ocl.AESCBC(iv, key)
 
         ECB_ciphertext = ECB_1.encrypt(data_p)
         ECB_plaintext = bo.depad(ECB_1.decrypt(ECB_ciphertext))
@@ -204,7 +204,7 @@ class set_2:
         data = b64decode(ut.import_data("data_S2C10.txt"))
         key = b"YELLOW SUBMARINE"
         iv = bytes([0]) * 16
-        CBC_2 = ocl.AES_CBC(iv, key)
+        CBC_2 = ocl.AESCBC(iv, key)
         decrypted = decode(bo.depad(CBC_2.decrypt(data)))
         print(f"CBC decrypted message : \n{decrypted[0:90]}...")
 
@@ -366,6 +366,8 @@ class set_2:
 
         # Find number of bytes to create a new output
 
+        # determine location of input block in output
+
     @staticmethod
     def challenge_15():
         print(f"\n-- Challenge 15 - PKCS#7 padding validation --")
@@ -381,24 +383,56 @@ class set_2:
                 print(f"Depad of {i} : {e}")
 
 
+class OracleProfiler:
+    def __init__(self, oracle):
+        self.oracle = oracle
+        self.block_size = None
+        self.input_position_in_block = None
+        self.model_output = oracle.encrypt(b"")
+        self.model_size - len(self.model_output)
+
+    def find_block_size(self):
+        # Encrypt increasingly long byte strings until output changes size.
+        # Record change in size of output.
+
+        # Initial variables.
+        output_size = self.model_size
+        bytestring = b""
+
+        # loop while output size unchanged.
+        while output_size == self.model_size:
+
+            # Increase input length by one byte
+            bytestring += b"0"
+            output_size = len(oracle.encrypt(bytestring))
+
+            # No solution found error.
+            if 100 < len(bytestring):
+                raise StopIteration("Indeterminable block size")
+
+        block_size = output_size - self.model_size
+        position_in_block = block_size - len(bytestring)
+        return block_size, position_in_block
+
+
 def run_challenges():
 
-    set_1.challenge_1()
-    set_1.challenge_2()
-    set_1.challenge_3()
-    set_1.challenge_4()
-    set_1.challenge_5()
-    set_1.challenge_6()
-    set_1.challenge_7()
-    set_1.challenge_8()
+    Set1.challenge_1()
+    Set1.challenge_2()
+    Set1.challenge_3()
+    Set1.challenge_4()
+    Set1.challenge_5()
+    Set1.challenge_6()
+    Set1.challenge_7()
+    Set1.challenge_8()
 
-    set_2.challenge_9()
-    set_2.challenge_10()
-    set_2.challenge_11()
-    set_2.challenge_12()
-    set_2.challenge_13()
-    set_2.challenge_14()
-    set_2.challenge_15()
+    Set2.challenge_9()
+    Set2.challenge_10()
+    Set2.challenge_11()
+    Set2.challenge_12()
+    Set2.challenge_13()
+    Set2.challenge_14()
+    # Set2.challenge_15()
 
 
 def main():
@@ -416,7 +450,7 @@ def main():
     print(f'\nExecution time in seconds: {executionTime}')
 
     print("Press return to exit.")
-    input()
+    # input()
 
 
 if __name__ == "__main__":

@@ -13,7 +13,7 @@ import utils as ut
 from utils import decode, encode
 
 
-class AES_ECB:
+class AESECB:
     def __init__(self, key):
         self.cipher = Cipher(algorithms.AES(key),
                              modes.ECB(),
@@ -28,7 +28,7 @@ class AES_ECB:
         return decryptor.update(data) + decryptor.finalize()
 
 
-class AES_CBC:
+class AESCBC:
     def __init__(self, iv, key):
         self.iv = iv
         self.key = key
@@ -39,7 +39,7 @@ class AES_CBC:
         input_message = np.frombuffer(data, dtype="uint8").reshape(-1, 16)
         for block in input_message:
             step_1 = bo.xor(iv, block)
-            iv = AES_ECB(self.key).encrypt(step_1)
+            iv = AESECB(self.key).encrypt(step_1)
             output_message += iv
         return output_message
 
@@ -48,7 +48,7 @@ class AES_CBC:
         output_message = b""
         input_message = np.frombuffer(data, dtype="uint8").reshape(-1, 16)
         for block in input_message:
-            step_1 = AES_ECB(self.key).decrypt(block)
+            step_1 = AESECB(self.key).decrypt(block)
             output_message += bo.xor(iv, step_1)
             iv = block
         return output_message
@@ -62,11 +62,11 @@ class C11:
         data_padded = bo.pad(16, data)
         if secrets.choice([True, False]):
             mode = "ECB"
-            result = AES_ECB(bo.random_AES_key()).encrypt(data_padded)
+            result = AESECB(bo.random_AES_key()).encrypt(data_padded)
         else:
             mode = "CBC"
-            result = AES_CBC(secrets.token_bytes(16),
-                             bo.random_AES_key()).encrypt(data_padded)
+            result = AESCBC(secrets.token_bytes(16),
+                            bo.random_AES_key()).encrypt(data_padded)
         print(f"Oracle mode used   : {mode}")
         return result
 
@@ -78,7 +78,7 @@ class C12:
 
     def encrypt(self, prepend):
         data = bo.pad(16, prepend + self.secret)
-        return AES_ECB(self.key).encrypt(data)
+        return AESECB(self.key).encrypt(data)
 
 
 class C14:
@@ -94,7 +94,7 @@ class C14:
 def profile_create(email):
     data = profile_parse(email)
     padded_data = bo.pad(16, data)
-    return AES_ECB(b"PASSWORDPASSWORD").encrypt(padded_data)
+    return AESECB(b"PASSWORDPASSWORD").encrypt(padded_data)
 
 
 def profile_parse(email):
@@ -104,7 +104,7 @@ def profile_parse(email):
 
 
 def profile_decrypt(data):
-    return AES_ECB(b"PASSWORDPASSWORD").decrypt(data)
+    return AESECB(b"PASSWORDPASSWORD").decrypt(data)
 
 
 def profile_unpack(data):
@@ -132,6 +132,6 @@ def find_block_size(oracle):
         output_size = len(oracle.encrypt(bytestring))
         if 100 < len(bytestring):
             raise StopIteration("Indeterminable block size")
-        block_size = output_size - initial_output_size
-        position_in_block = block_size - len(bytestring)
+    block_size = output_size - initial_output_size
+    position_in_block = block_size - len(bytestring)
     return block_size, position_in_block
