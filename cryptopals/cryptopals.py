@@ -229,8 +229,8 @@ class Set2:
 
         print(f"Detected oracle mode    : {profile.mode}")
         print(f"Detected block size     : {profile.block_size}")
-        print(f"Input entry byte index  : {profile.entry_byte_index}")
         print(f"Input entry block index : {profile.entry_block_index}")
+        print(f"Input entry byte index  : {profile.entry_byte_index}")
 
         decryption = b""
         data_size = len(oracle.encrypt(b""))
