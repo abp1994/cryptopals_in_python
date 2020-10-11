@@ -210,13 +210,14 @@ class Set2:
 
     @staticmethod
     def challenge_11():
-        oracles = [ocl.C11() for i in range(5)]
-        modes = [ocl.Profiler(oracle).mode for oracle in oracles]
-
         print(f"\n-- Challenge 11 - An ECB/CBC detection oracle --")
+
+        oracles = [ocl.C11() for i in range(5)]
+        detected_modes = [ocl.Profiler(oracle).mode for oracle in oracles]
+
         print(f"Random AES key : {bo.random_AES_key()}")
         print(f"Oracle modes   : {[oracle.mode for oracle in oracles]}")
-        print(f"Detected modes : {modes}")
+        print(f"Detected modes : {detected_modes}")
 
     @staticmethod
     def challenge_12():
@@ -226,9 +227,10 @@ class Set2:
         oracle = ocl.C12()
         profile = ocl.Profiler(oracle)
 
-        print(f"Determined oracle block size : {profile.block_size}")
-        print(f"Input position along block   : {profile.input_index}")
-        print(f"Oracle mode                  : {profile.mode}")
+        print(f"Detected oracle mode    : {profile.mode}")
+        print(f"Detected block size     : {profile.block_size}")
+        print(f"Input entry byte index  : {profile.entry_byte_index}")
+        print(f"Input entry block index : {profile.entry_block_index}")
 
         decryption = b""
         data_size = len(oracle.encrypt(b""))
@@ -356,19 +358,18 @@ class Set2:
         print(f"\n-- Challenge 14 - Byte-at-a-time ECB decryption (Harder) --")
 
         oracle = ocl.C14()
-        block_size, position_in_block = ocl.find_block_size(oracle)
-        original_output = oracle.encrypt(b"")
+        profile = ocl.Profiler(oracle)
 
-        print(f"Determined oracle block size : {block_size}")
-        print(f"Input index along block   : {position_in_block}")
-        print(f"Oracle mode               : {ocl.ECB_check(oracle)}")
-        print(f"Size of output               : {len(original_output)}")
+        print(f"Detected oracle mode    : {profile.mode}")
+        print(f"Detected block size     : {profile.block_size}")
+        print(f"Input entry block index : {profile.entry_block_index}")
+        print(f"Input entry byte index  : {profile.entry_byte_index}")
+        print(f"Size of output          : {profile.model_size}")
 
         print(f"To be completed...!")
 
         # Find initial output size.
-        profile = ocl.Profiler(oracle)
-        print(profile.mode, profile.block_size, profile.input_index)
+
         # Find number of bytes to create a new output
 
         # determine location of input block in output

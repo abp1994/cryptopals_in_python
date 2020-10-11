@@ -1,6 +1,7 @@
 import secrets
 import sys
 from base64 import b64decode
+from dataclasses import dataclass
 from pathlib import Path
 
 import numpy as np
@@ -8,8 +9,6 @@ from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 
 sys.path.append(str(Path(__file__).parent.resolve()))
-from dataclasses import dataclass
-
 import byte_operations as bo
 import utils as ut
 from utils import decode, encode
@@ -86,7 +85,7 @@ class C12:
 
 class C14:
     def __init__(self):
-        self.random_prefix = secrets.token_bytes(secrets.randbelow(16) + 16)
+        self.random_prefix = secrets.token_bytes(secrets.randbelow(63) + 1)
         self.oracle = C12()
 
     def encrypt(self, user_bytes):
@@ -148,7 +147,8 @@ class Profiler:
         self.model_size = len(self.model_output)
 
         self.mode = self.mode_check()
-        self.block_size, self.input_index = self.find_block_size()
+        self.block_size, self.entry_byte_index, self.entry_block_index = self.find_block_size(
+        )
 
     def mode_check(self):
         data = self.oracle.encrypt(b"0" * 50)
@@ -177,6 +177,17 @@ class Profiler:
 
         # Determine change in size of output and input byte position in block
         block_size = output_size - self.model_size
-        index_in_block = block_size - len(bytestring)
+        entry_byte_index = block_size - len(bytestring)
 
-        return block_size, index_in_block
+        # find which block of output has changed
+        new_output = self.oracle.encrypt(bytestring)
+
+        # Check which of the output blocks is different.
+        # done by xoring new_output with model_output
+        # and then finding the first non zero byte. The
+        # index of this block divided by 16 is the block index.
+        change = bytearray(bo.xor(new_output, self.model_output))
+        entry_block_index = int(
+            next(i for i, byte in enumerate(change) if byte) / 16)
+
+        return block_size, entry_byte_index, entry_block_index
