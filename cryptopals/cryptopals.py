@@ -212,7 +212,7 @@ class Set2:
     def challenge_11():
         print(f"\n-- Challenge 11 - An ECB/CBC detection oracle --")
         print(f"Random AES Key     : {bo.random_AES_key()}")
-        print(f"ECB mode detected? : {ocl.ECB_check(ocl.C11())}")
+        print(f"ECB mode detected? : {ocl.Profiler(ocl.C11()).mode}")
 
     @staticmethod
     def challenge_12():
@@ -363,7 +363,8 @@ class Set2:
         print(f"To be completed...!")
 
         # Find initial output size.
-
+        profile = ocl.Profiler(oracle)
+        print(profile.mode, profile.block_size, profile.input_position)
         # Find number of bytes to create a new output
 
         # determine location of input block in output
@@ -383,38 +384,6 @@ class Set2:
                 print(f"Depad of {i} : {e}")
 
 
-class OracleProfiler:
-    def __init__(self, oracle):
-        self.oracle = oracle
-        self.block_size = None
-        self.input_position_in_block = None
-        self.model_output = oracle.encrypt(b"")
-        self.model_size - len(self.model_output)
-
-    def find_block_size(self):
-        # Encrypt increasingly long byte strings until output changes size.
-        # Record change in size of output.
-
-        # Initial variables.
-        output_size = self.model_size
-        bytestring = b""
-
-        # loop while output size unchanged.
-        while output_size == self.model_size:
-
-            # Increase input length by one byte
-            bytestring += b"0"
-            output_size = len(oracle.encrypt(bytestring))
-
-            # No solution found error.
-            if 100 < len(bytestring):
-                raise StopIteration("Indeterminable block size")
-
-        block_size = output_size - self.model_size
-        position_in_block = block_size - len(bytestring)
-        return block_size, position_in_block
-
-
 def run_challenges():
 
     Set1.challenge_1()
@@ -432,7 +401,7 @@ def run_challenges():
     Set2.challenge_12()
     Set2.challenge_13()
     Set2.challenge_14()
-    # Set2.challenge_15()
+    Set2.challenge_15()
 
 
 def main():
