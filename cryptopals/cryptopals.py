@@ -423,7 +423,7 @@ def main():
     print(f'\nExecution time in seconds: {executionTime}')
 
     print("Press return to exit.")
-    # input()
+    input()
 
 
 if __name__ == "__main__":
