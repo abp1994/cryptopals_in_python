@@ -210,9 +210,13 @@ class Set2:
 
     @staticmethod
     def challenge_11():
+        oracles = [ocl.C11() for i in range(5)]
+        modes = [ocl.Profiler(oracle).mode for oracle in oracles]
+
         print(f"\n-- Challenge 11 - An ECB/CBC detection oracle --")
-        print(f"Random AES Key     : {bo.random_AES_key()}")
-        print(f"ECB mode detected? : {ocl.Profiler(ocl.C11()).mode}")
+        print(f"Random AES key : {bo.random_AES_key()}")
+        print(f"Oracle modes   : {[oracle.mode for oracle in oracles]}")
+        print(f"Detected modes : {modes}")
 
     @staticmethod
     def challenge_12():
@@ -220,22 +224,22 @@ class Set2:
               "Byte-at-a-time ECB decryption (Simple) --")
 
         oracle = ocl.C12()
-        block_size, position_in_block = ocl.find_block_size(oracle)
+        profile = ocl.Profiler(oracle)
 
-        print(f"Determined oracle block size : {block_size}")
-        print(f"Input position along block   : {position_in_block}")
-        print(f"Oracle using ECB mode?       : {ocl.ECB_check(oracle)}")
+        print(f"Determined oracle block size : {profile.block_size}")
+        print(f"Input position along block   : {profile.input_index}")
+        print(f"Oracle mode                  : {profile.mode}")
 
         decryption = b""
         data_size = len(oracle.encrypt(b""))
 
         # For all blocks in the data.
-        for block_position in range(0, data_size, block_size):
+        for block_position in range(0, data_size, profile.block_size):
             block_start = block_position
-            block_end = block_position + block_size
+            block_end = block_position + profile.block_size
 
             # For all byte positions along the block (15->0).
-            for byte_position in reversed(range(block_size)):
+            for byte_position in reversed(range(profile.block_size)):
                 buffer = b"0" * byte_position + decryption
                 model_bytes = oracle.encrypt(
                     b"0" * (byte_position))[block_start:block_end]
@@ -356,15 +360,15 @@ class Set2:
         original_output = oracle.encrypt(b"")
 
         print(f"Determined oracle block size : {block_size}")
-        print(f"Input position along block   : {position_in_block}")
-        print(f"Oracle using ECB mode?       : {ocl.ECB_check(oracle)}")
+        print(f"Input index along block   : {position_in_block}")
+        print(f"Oracle mode               : {ocl.ECB_check(oracle)}")
         print(f"Size of output               : {len(original_output)}")
 
         print(f"To be completed...!")
 
         # Find initial output size.
         profile = ocl.Profiler(oracle)
-        print(profile.mode, profile.block_size, profile.input_position)
+        print(profile.mode, profile.block_size, profile.input_index)
         # Find number of bytes to create a new output
 
         # determine location of input block in output
