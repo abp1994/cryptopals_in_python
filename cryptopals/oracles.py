@@ -8,6 +8,8 @@ from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 
 sys.path.append(str(Path(__file__).parent.resolve()))
+from dataclasses import dataclass
+
 import byte_operations as bo
 import utils as ut
 from utils import decode, encode
@@ -55,19 +57,20 @@ class AESCBC:
 
 
 class C11:
+    def __init__(self):
+        self.mode = secrets.choice(["ECB", "CBC"])
+        self.key = bo.random_AES_key()
+        self.iv = secrets.token_bytes(16)
+
     def encrypt(self, data):
         data = secrets.token_bytes(
             secrets.randbelow(5)) + data + secrets.token_bytes(
                 secrets.randbelow(5))
         data_padded = bo.pad(16, data)
-        if secrets.choice([True, False]):
-            mode = "ECB"
-            result = AESECB(bo.random_AES_key()).encrypt(data_padded)
+        if self.mode == "ECB":
+            result = AESECB(self.key).encrypt(data_padded)
         else:
-            mode = "CBC"
-            result = AESCBC(secrets.token_bytes(16),
-                            bo.random_AES_key()).encrypt(data_padded)
-        print(f"Oracle mode used   : {mode}")
+            result = AESCBC(self.iv, self.key).encrypt(data_padded)
         return result
 
 
@@ -135,3 +138,45 @@ def find_block_size(oracle):
     block_size = output_size - initial_output_size
     position_in_block = block_size - len(bytestring)
     return block_size, position_in_block
+
+
+class Profiler:
+    """Functions used to profile an encryption orcale"""
+    def __init__(self, oracle):
+        self.oracle = oracle
+        self.model_output = oracle.encrypt(b"")
+        self.model_size = len(self.model_output)
+
+        self.mode = self.mode_check()
+        self.block_size, self.input_position = self.find_block_size()
+
+    def mode_check(self):
+        data = self.oracle.encrypt(b"0" * 50)
+        blocks = np.frombuffer(data, dtype="uint8").reshape(-1, 16)
+        duplicate_blocks = len(blocks) - len(np.unique(blocks, axis=0))
+        return "ECB" if 0 < duplicate_blocks else "Not ECB"
+
+    def find_block_size(self):
+        # Encrypt increasingly long byte strings using the oracle until
+        # output changes size. Return change in size of output.
+
+        # Initialise variables.
+        output_size = self.model_size
+        bytestring = b""
+
+        # Loop while output size remains unchanged.
+        while output_size == self.model_size:
+
+            # Increase input length by one byte.
+            bytestring += b"0"
+            output_size = len(self.oracle.encrypt(bytestring))
+
+            # Clause for no solution found.
+            if 100 < len(bytestring):
+                raise StopIteration("Indeterminable block size")
+
+        # Determine change in size of output and input byte position in block
+        block_size = output_size - self.model_size
+        position_in_block = block_size - len(bytestring)
+
+        return block_size, position_in_block
