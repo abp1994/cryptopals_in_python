@@ -141,14 +141,14 @@ def find_block_size(oracle):
 
 
 class Profiler:
-    """Functions used to profile an encryption orcale"""
+    """Functions used to profile an encryption oracle"""
     def __init__(self, oracle):
         self.oracle = oracle
         self.model_output = oracle.encrypt(b"")
         self.model_size = len(self.model_output)
 
         self.mode = self.mode_check()
-        self.block_size, self.input_position = self.find_block_size()
+        self.block_size, self.input_index = self.find_block_size()
 
     def mode_check(self):
         data = self.oracle.encrypt(b"0" * 50)
@@ -177,6 +177,6 @@ class Profiler:
 
         # Determine change in size of output and input byte position in block
         block_size = output_size - self.model_size
-        position_in_block = block_size - len(bytestring)
+        index_in_block = block_size - len(bytestring)
 
-        return block_size, position_in_block
+        return block_size, index_in_block
