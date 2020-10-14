@@ -4,6 +4,8 @@ from base64 import b64decode, b64encode
 from collections import Counter
 from pathlib import Path
 
+import numpy as np
+
 sys.path.append(str(Path(__file__).parent.resolve()))
 import byte_operations as bo
 import oracles as ocl
@@ -249,6 +251,7 @@ class Set2:
                 # Test all possible characters against model_byte
                 for char in range(256):
                     byte = bytes([char])
+                    # if character matched add it to the decryption
                     if model_bytes == oracle.encrypt(
                             buffer + byte)[block_start:block_end]:
                         decryption += byte
@@ -368,11 +371,27 @@ class Set2:
 
         print(f"To be completed...!")
 
-        # Find initial output size.
+        # create a position index of where to start crack
+        crack_position = [0, profile.block_size]  # [block index, byte index]
 
-        # Find number of bytes to create a new output
+        # determine the location of the start of the decrypt attempt
+        if (profile.entry_byte_index % profile.block_size == 0):
+            start_block_index = profile.entry_byte_index
+        else:
+            start_block_index
 
-        # determine location of input block in output
+        decrypted = b""
+
+        # for each block after the user attack input
+        block_index = 1
+
+        # for each byte in the block
+
+        # create a model
+        attack_buffer = b"0" * byte_index + decryption
+        model_buffer = b"0" * byte_index
+        model_bytes = oracle.encrypt(b"0" *
+                                     (byte_position))[block_start:block_end]
 
     @staticmethod
     def challenge_15():
