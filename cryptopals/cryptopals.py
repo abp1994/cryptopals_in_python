@@ -214,6 +214,7 @@ class Set2:
     def challenge_11():
         print(f"\n-- Challenge 11 - An ECB/CBC detection oracle --")
 
+        # Create and profile 5 oracles.
         oracles = [ocl.C11() for i in range(5)]
         detected_modes = [ocl.Profiler(oracle).mode for oracle in oracles]
 
