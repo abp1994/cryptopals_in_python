@@ -162,7 +162,8 @@ class Set1:
 
         # Find if data contains duplicate blocks.
         for line_index2, line in enumerate(hex_ciphertext.splitlines()):
-            if bo.ECB_mode_check(bytes.fromhex(line)): break
+            if bo.ECB_mode_check(bytes.fromhex(line)):
+                break
 
         print(f"Find line with duplicate blocks")
         print(f"Corresponding line            : {line_index2}")
@@ -298,7 +299,8 @@ class Set2:
         print(f"Encrypted profile  : {end_align_encryption}")
         print(f"Encrypted size     : {end_align_encryption_len}")
 
-        # Add bytes to push unwanted data from encryption into end block and crop useful blocks.
+        # Add bytes to push unwanted data from encryption into end
+        # block and crop useful blocks.
         bytes_to_remove = len(b"user")
         crop_email = ("b" * bytes_to_remove) + end_align_email
         crop = ocl.profile_create(crop_email)[0:48]
