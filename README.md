@@ -1,11 +1,13 @@
-# Cryptopals_in_python
-
-Cryptopals.py is a Python script that works its way through the [Cryptopals](https://cryptopals.com/) challenges printing various steps along the way to the terminal. Byte operation functions are stored in a separate script named byte_operations.py.
+# Puzzle helper file
 
 ## Usage
 
-Install the cryptopals package and run 'run_cryptopals' from the CL. Alternately after installation of all dependencies run the cryptopals.py script in the cryptopals directory.
+First install venv using the terminal using "pip install venv" (Assuming you have python installed, if not install that first from their website)
 
-## License
+Next download this repository to your documents then cd into the folder using the terminal in vscode. Once in the folder use the command "python -m venv venv" to setup a virtual environment.
 
-[CC0](https://creativecommons.org/share-your-work/public-domain/cc0/)
+Use the command ".\venv\scripts\activate" to activate the virtual environment
+
+Next run the command pip install cryptopals.
+
+Once this is done open the cryptopals.py file in vscode. Use this file to help you on your quest.

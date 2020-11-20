@@ -6,69 +6,11 @@ from itertools import chain
 import numpy as np
 from scipy.stats import chisquare
 
+# !!!!note to self XORd something agaist 'SecretSitaLalitaPepitoNarutoBabutoCarottoJohnDorianFever'
+
 
 def xor(a, b):
     return bytes(a_byte ^ b_byte for a_byte, b_byte in zip(a, b))
-
-
-def edit_distance(a, b):
-    return sum([bin(byte).count("1") for byte in xor(a, b)])
-
-
-def single_byte_xor(byte, byte_array):
-    return xor(byte_array, byte * len(byte_array))
-
-
-def single_byte_xor_breaker(ciphertext):
-    def attempt_crack():
-        for char in range(256):
-            byte = bytes([char])
-            score = text_scorer(single_byte_xor(byte, ciphertext)).score()
-            yield score, byte
-
-    return max(attempt_crack())
-
-
-def repeating_key_xor(ciphertext, key):
-    def nth_xor(n, byte):
-        return byte ^ key[n % len(key)]
-
-    return bytes([nth_xor(n, byte) for n, byte in enumerate(ciphertext)])
-
-
-def find_key_size(max_size, data):
-    samples = 10
-    normalised_edit_distance = np.zeros([samples])
-    results = []
-
-    for keysize in range(1, max_size):
-        for pair in range(samples):
-
-            # Take adjacent keysize size blocks.
-            ciphertext = data[(2 * pair) * keysize:(2 * pair + 1) * keysize]
-            key = data[(2 * pair + 1) * keysize:(2 * pair + 2) * keysize]
-
-            # Calculate normalised edit distance.
-            normalised_edit_distance[pair] = edit_distance(ciphertext,
-                                                           key) / keysize
-
-        # Store average edit distance for keysize.
-        results.append([np.average(normalised_edit_distance), keysize])
-    return [row[1] for row in sorted(results)]
-
-
-def key_finder(key_size, data):
-
-    # Create list of rectangular size using key_size.
-    lower_multiple = len(data) - (len(data) % key_size)
-    data_array = np.frombuffer(data, dtype="uint8")[0:lower_multiple]
-
-    # Reshape to key_size size rows and transpose.
-    data_array = data_array.reshape(-1, key_size)
-    output_list = [bytes(row.tolist()) for row in data_array.T]
-
-    # Return most promising key of key_size size.
-    return b"".join([single_byte_xor_breaker(item)[1] for item in output_list])
 
 
 def pad(block_size, data):
@@ -93,6 +35,7 @@ def random_AES_key():
     return secrets.token_bytes(16)
 
 
+# a function for determining whether a piece of data has been encryptes with AES ECB mode
 def ECB_mode_check(data):
     array = np.frombuffer(data, dtype="uint8").reshape(-1, 16)
     duplicate_blocks = len(array) - len(np.unique(array, axis=0))
@@ -173,4 +116,3 @@ class text_scorer:
         # Return goodness of fit.
         return chisquare(case_independent_letter_frequencies,
                          self.expected_frequencies)[1]
-                         
