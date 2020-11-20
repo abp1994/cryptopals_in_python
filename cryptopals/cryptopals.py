@@ -427,7 +427,7 @@ def run_challenges():
     Set2.challenge_11()
     Set2.challenge_12()
     Set2.challenge_13()
-    Set2.challenge_14()
+    # Set2.challenge_14()
     Set2.challenge_15()
 
 
