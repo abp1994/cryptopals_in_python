@@ -85,7 +85,7 @@ class C12:
 
 class C14:
     def __init__(self):
-        self.random_prefix = secrets.token_bytes(secrets.randbelow(63) + 1)
+        self.random_prefix = secrets.token_bytes(secrets.randbelow(64) + 1)
         self.oracle = C12()
 
     def encrypt(self, user_bytes):
