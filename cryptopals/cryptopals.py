@@ -246,11 +246,11 @@ class Set2:
             block_end_byte_index = block_start_byte_index + profile.block_size
 
             # For all byte positions along the block (15->0).
-            for byte_position in reversed(range(profile.block_size)):
-                buffer = b"0" * byte_position + decryption
+            for byte_index in reversed(range(profile.block_size)):
+                buffer = b"0" * byte_index + decryption
                 model_bytes = oracle.encrypt(
-                    b"0" * (byte_position)
-                )[block_start_byte_index:block_end_byte_index]
+                    b"0" *
+                    (byte_index))[block_start_byte_index:block_end_byte_index]
 
                 # Test all possible characters against model_byte.
                 for char in range(256):
