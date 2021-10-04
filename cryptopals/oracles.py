@@ -85,7 +85,8 @@ class C12:
 
 class C14:
     def __init__(self):
-        self.random_prefix = secrets.token_bytes(secrets.randbelow(64) + 1)
+        #self.random_prefix = secrets.token_bytes(secrets.randbelow(64) + 1)
+        self.random_prefix = b'1234567890123111'
         self.oracle = C12()
 
     def encrypt(self, user_bytes):
@@ -123,24 +124,8 @@ def ECB_check(oracle):
     return True if 0 < duplicate_blocks else False
 
 
-def find_block_size(oracle):
-    # Encrypt increasingly long byte strings until output changes size.
-    # Record change in size of output.
-    initial_output_size = len(oracle.encrypt(b""))
-    output_size = initial_output_size
-    bytestring = b""
-    while output_size == initial_output_size:
-        bytestring += b"0"
-        output_size = len(oracle.encrypt(bytestring))
-        if 100 < len(bytestring):
-            raise StopIteration("Indeterminable block size")
-    block_size = output_size - initial_output_size
-    position_in_block = block_size - len(bytestring)
-    return block_size, position_in_block
-
-
+#Functions used to profile an encryption oracle.
 class Profiler:
-    """Functions used to profile an encryption oracle"""
     def __init__(self, oracle):
         self.oracle = oracle
         self.model_output = oracle.encrypt(b"")
@@ -172,14 +157,14 @@ class Profiler:
             output_size = len(self.oracle.encrypt(bytestring))
 
             # Clause for no solution found.
-            if 100 < len(bytestring):
+            if 128 < len(bytestring):
                 raise StopIteration("Indeterminable block size")
 
-        # Determine change in size of output and input byte position in block
+        # Determine change in size of output and input byte position in block.
         block_size = output_size - self.model_size
         entry_byte_index = block_size - len(bytestring)
 
-        # find which block of output has changed
+        # Find which block of output has changed.
         new_output = self.oracle.encrypt(bytestring)
 
         # Check which of the output blocks is different.
