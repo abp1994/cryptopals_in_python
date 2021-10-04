@@ -189,13 +189,13 @@ class Profiler:
         # Return the index of the block that matches with a previous block.
 
         bytestring = b''
-        match_found, duplicate_block_index = bo.detect_adjacent_duplicate_blocks(
+        duplicate_found, duplicate_block_index = bo.detect_adjacent_duplicate_blocks(
             self.oracle.encrypt(bytestring), block_size)
 
-        while (not (match_found)):
+        while (not (duplicate_found)):
 
             bytestring += b'Z'
-            match_found, duplicate_block_index = bo.detect_adjacent_duplicate_blocks(
+            duplicate_found, duplicate_block_index = bo.detect_adjacent_duplicate_blocks(
                 self.oracle.encrypt(bytestring), block_size)
 
             if len(bytestring) > (4 * block_size):

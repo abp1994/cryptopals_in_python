@@ -381,7 +381,8 @@ class Set2:
         print(f"To be completed...!")
 
         # Create an input that fills the current block, by using 1 to block_size bytes.
-        bytes_to_add = profile.initial_pad_size
+        bytes_to_add = profile.block_size - (profile.input_byte_index %
+                                             profile.block_size)
         block_end_input = b"0" * bytes_to_add
 
         print(f"Bytes to add        : {bytes_to_add}")

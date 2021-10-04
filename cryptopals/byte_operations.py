@@ -101,20 +101,20 @@ def ECB_mode_check(data):
 def detect_adjacent_duplicate_blocks(data, block_size):
     data_size_in_blocks = int(len(data) / block_size)
     previous_block = b''
-    match_found = False
+    duplicate_found = False
     duplicate_block_index = 0
     for block_index in range(data_size_in_blocks):
         block_start_byte_index = block_index * block_size
         block_end_byte_index = block_start_byte_index + block_size
         current_block = data[block_start_byte_index:block_end_byte_index]
         if current_block == previous_block:
-            match_found = True
+            duplicate_found = True
             duplicate_block_index = block_index
             break
         else:
             previous_block = current_block
 
-    return match_found, duplicate_block_index
+    return duplicate_found, duplicate_block_index
 
 
 class text_scorer:
