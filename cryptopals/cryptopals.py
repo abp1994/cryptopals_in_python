@@ -399,7 +399,6 @@ class Set2:
                                  data_size_in_blocks + 1):
             block_start_byte_index = block_index * profile.block_size
             block_end_byte_index = block_start_byte_index + profile.block_size
-            print(f"block_i: {block_index}")
 
             # For all byte positions along the block (15->0).
             for byte_position in reversed(range(profile.block_size)):
@@ -407,9 +406,6 @@ class Set2:
                 model_block = oracle.encrypt(
                     block_end_input + (b"0" * (byte_position))
                 )[block_start_byte_index:block_end_byte_index]
-                print(f"byte_i: {byte_position}")
-                print(f"model: {model_block}")
-                print(len(model_block))
 
                 # Test all possible characters against model_block.
                 for char in range(256):
@@ -421,7 +417,17 @@ class Set2:
                         decryption += byte
                         print(f"match found :{decryption}")
                         break
-                    if char == 255: raise Exception("No match found")
+                    if char == 255:
+                        yolo = oracle.encrypt(
+                            buffer +
+                            byte)[block_start_byte_index:block_end_byte_index]
+
+                        print(f"block_i: {block_index}")
+                        print(f"byte_i: {byte_position}")
+                        print(f"model: {model_block}")
+                        print(f"model_block:{model_block}")
+                        print(f"crack_block:{yolo}")
+                        raise Exception("No match found")
 
         print(decryption)
         """print(
