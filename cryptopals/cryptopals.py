@@ -237,25 +237,28 @@ class Set2:
         print(f"Input entry byte index  : {profile.entry_byte_index}")
 
         decryption = b""
-        data_size = len(oracle.encrypt(b""))
+        data_size_in_blocks = int(
+            len(oracle.encrypt(b"")) / profile.block_size)
 
         # For all blocks in the data.
-        for block_position in range(0, data_size, profile.block_size):
-            block_start = block_position
-            block_end = block_position + profile.block_size
+        for block_index in range(data_size_in_blocks):
+            block_start_byte_index = block_index * profile.block_size
+            block_end_byte_index = block_start_byte_index + profile.block_size
 
             # For all byte positions along the block (15->0).
             for byte_position in reversed(range(profile.block_size)):
                 buffer = b"0" * byte_position + decryption
                 model_bytes = oracle.encrypt(
-                    b"0" * (byte_position))[block_start:block_end]
+                    b"0" * (byte_position)
+                )[block_start_byte_index:block_end_byte_index]
 
-                # Test all possible characters against model_byte
+                # Test all possible characters against model_byte.
                 for char in range(256):
                     byte = bytes([char])
-                    # if character matched add it to the decryption
+                    # If character matched add it to the decryption.
                     if model_bytes == oracle.encrypt(
-                            buffer + byte)[block_start:block_end]:
+                            buffer +
+                            byte)[block_start_byte_index:block_end_byte_index]:
                         decryption += byte
                         break
 
@@ -374,27 +377,53 @@ class Set2:
 
         print(f"To be completed...!")
 
-        # create a position index of where to start crack
-        crack_position = [0, profile.block_size]  # [block index, byte index]
+        # Create an input that fills the current block.
+        bytes_to_add = profile.block_size - profile.entry_byte_index
+        block_end_input = b"a" * bytes_to_add
 
-        # determine the location of the start of the decrypt attempt
-        if (profile.entry_byte_index % profile.block_size == 0):
-            start_block_index = profile.entry_byte_index
-        else:
-            start_block_index
+        print(f"Bytes to add        : {bytes_to_add}")
+        print(f"Input ending block  : {block_end_input}")
 
-        decrypted = b""
+        decryption = b""
+        data_size_in_blocks = int(
+            len(oracle.encrypt(b"")) / profile.block_size)
 
-        # for each block after the user attack input
-        block_index = 1
+        print(f"Size of output in blocks         : {data_size_in_blocks}")
 
-        # for each byte in the block
+        # For all blocks in the data after the prefix blocks.
+        for block_index in range(profile.entry_block_index + 1,
+                                 data_size_in_blocks):
+            block_start_byte_index = block_index * profile.block_size
+            block_end_byte_index = block_start_byte_index + profile.block_size
+            print(f"block_i: {block_index}")
 
-        # create a model
-        attack_buffer = b"0" * byte_index + decryption
-        model_buffer = b"0" * byte_index
-        model_bytes = oracle.encrypt(b"0" *
-                                     (byte_position))[block_start:block_end]
+            # For all byte positions along the block (15->0).
+            for byte_position in reversed(range(profile.block_size)):
+                buffer = block_end_input + (b"0" * byte_position) + decryption
+                model_bytes = oracle.encrypt(
+                    block_end_input + (b"0" * (byte_position))
+                )[block_start_byte_index:block_end_byte_index]
+                print(f"byte_i: {byte_position}")
+                print(f"model: {model_bytes}")
+                print(len(model_bytes))
+
+                # Test all possible characters against model_byte.
+                for char in range(256):
+                    byte = bytes([char])
+                    # If character matched add it to the decryption.
+                    if model_bytes == oracle.encrypt(
+                            buffer +
+                            byte)[block_start_byte_index:block_end_byte_index]:
+                        decryption += byte
+
+                        break
+                    if char == 255: raise Exception("No match found")
+                print(f"match found :{decryption}")
+
+        print(decryption)
+        """print(
+            f"Decoded message : \n{decode(bo.depad((b'0'*(profile.entry_block_index-1))+decryption))}"
+        )"""
 
     @staticmethod
     def challenge_15():
@@ -425,9 +454,11 @@ def run_challenges():
     Set2.challenge_9()
     Set2.challenge_10()
     Set2.challenge_11()
+
     Set2.challenge_12()
+
     Set2.challenge_13()
-    Set2.challenge_14()
+    #Set2.challenge_14()
     Set2.challenge_15()
 
 
