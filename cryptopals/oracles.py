@@ -85,8 +85,8 @@ class C12:
 
 class C14:
     def __init__(self):
-        #self.random_prefix = secrets.token_bytes(secrets.randbelow(64) + 1)
-        self.random_prefix = b'1234567890123111'
+        self.random_prefix = secrets.token_bytes(secrets.randbelow(64) + 1)
+        #self.random_prefix = secrets.token_bytes(6 + 16)
         self.oracle = C12()
 
     def encrypt(self, user_bytes):
@@ -132,8 +132,12 @@ class Profiler:
         self.model_size = len(self.model_output)
 
         self.mode = self.mode_check()
-        self.block_size, self.entry_byte_index, self.entry_block_index = self.find_block_size(
+        self.block_size, self.initial_pad_size, self.entry_block_index = self.find_block_size(
         )
+        if self.mode == "ECB":
+            self.input_byte_index = self.find_input_byte_index(self.block_size)
+        else:
+            self.input_byte_index = None
 
     def mode_check(self):
         data = self.oracle.encrypt(b"0" * 50)
@@ -157,12 +161,14 @@ class Profiler:
             output_size = len(self.oracle.encrypt(bytestring))
 
             # Clause for no solution found.
-            if 128 < len(bytestring):
+            if 256 < len(bytestring):
                 raise StopIteration("Indeterminable block size")
 
         # Determine change in size of output and input byte position in block.
         block_size = output_size - self.model_size
-        entry_byte_index = block_size - len(bytestring)
+        initial_pad_size = len(bytestring)
+        if initial_pad_size == 0:
+            initial_pad_size = 16
 
         # Find which block of output has changed.
         new_output = self.oracle.encrypt(bytestring)
@@ -175,4 +181,31 @@ class Profiler:
         entry_block_index = int(
             next(i for i, byte in enumerate(change) if byte) / 16)
 
-        return block_size, entry_byte_index, entry_block_index
+        return block_size, initial_pad_size, entry_block_index
+
+    def find_input_byte_index(self, block_size):
+        # Encrypt increasingly long byte strings using the oracle until
+        # 2 identical blocks are found in the output next to each other.
+        # Return the index of the block that matches with a previous block.
+
+        bytestring = b''
+        match_found, duplicate_block_index = bo.detect_adjacent_duplicate_blocks(
+            self.oracle.encrypt(bytestring), block_size)
+
+        while (not (match_found)):
+
+            bytestring += b'Z'
+            match_found, duplicate_block_index = bo.detect_adjacent_duplicate_blocks(
+                self.oracle.encrypt(bytestring), block_size)
+
+            if len(bytestring) > (4 * block_size):
+                raise StopIteration("Indeterminate input byte index")
+
+        print(f"match found bs: {bytestring} - {len(bytestring)}")
+        print(f"block index of duplicate: {duplicate_block_index}")
+        print(
+            f"input index byte: {((duplicate_block_index+1)*block_size)-len(bytestring)}"
+        )
+        input_byte_index = (
+            (duplicate_block_index + 1) * block_size) - len(bytestring)
+        return input_byte_index
