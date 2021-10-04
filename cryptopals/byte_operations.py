@@ -1,7 +1,6 @@
 import re
 import secrets
 from collections import Counter
-from itertools import chain
 
 import numpy as np
 from scipy.stats import chisquare
@@ -173,4 +172,3 @@ class text_scorer:
         # Return goodness of fit.
         return chisquare(case_independent_letter_frequencies,
                          self.expected_frequencies)[1]
-                         
