@@ -439,12 +439,11 @@ def run_challenges():
     Set1.challenge_6()
     Set1.challenge_7()
     Set1.challenge_8()
+
     Set2.challenge_9()
     Set2.challenge_10()
     Set2.challenge_11()
-
     Set2.challenge_12()
-
     Set2.challenge_13()
     Set2.challenge_14()
     Set2.challenge_15()
