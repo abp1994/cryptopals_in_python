@@ -117,7 +117,7 @@ def profile_unpack(data):
 
 
 def ECB_check(oracle):
-    data = oracle.encrypt(b"0" * 50)
+    data = oracle.encrypt(b"Z" * 50)
     blocks = np.frombuffer(data, dtype="uint8").reshape(-1, 16)
     duplicate_blocks = len(blocks) - len(np.unique(blocks, axis=0))
     return True if 0 < duplicate_blocks else False
@@ -131,15 +131,16 @@ class Profiler:
         self.model_size = len(self.model_output)
 
         self.mode = self.mode_check()
-        self.block_size, self.initial_pad_size, self.input_block_index = self.find_block_size(
-        )
+        self.block_size, self.initial_pad_size = self.find_block_size()
         if self.mode == "ECB":
             self.input_byte_index = self.find_input_byte_index(self.block_size)
+            self.input_block_index = self.input_byte_index // self.block_size
         else:
             self.input_byte_index = None
+            self.input_block_index = None
 
     def mode_check(self):
-        data = self.oracle.encrypt(b"0" * 50)
+        data = self.oracle.encrypt(b"Z" * 50)
         blocks = np.frombuffer(data, dtype="uint8").reshape(-1, 16)
         duplicate_blocks = len(blocks) - len(np.unique(blocks, axis=0))
         return "ECB" if 0 < duplicate_blocks else "Not ECB"
@@ -156,7 +157,7 @@ class Profiler:
         while output_size == self.model_size:
 
             # Increase input length by one byte.
-            bytestring = b"".join([bytestring, b"0"])
+            bytestring = b"".join([bytestring, b"Z"])
             output_size = len(self.oracle.encrypt(bytestring))
 
             # Clause for no solution found.
@@ -169,19 +170,7 @@ class Profiler:
         if initial_pad_size == 0:
             initial_pad_size = 16
 
-        # Find which block of output has changed.
-        new_output = self.oracle.encrypt(bytestring)
-
-        # Check which of the output blocks is different.
-        # done by xoring new_output with model_output
-        # and then finding the first non zero byte. The
-        # index of this block divided by 16 is the block index.
-        change = bytearray(bo.xor(new_output, self.model_output))
-        input_block_index = int(
-            next(i for i, byte in enumerate(change) if byte) / 16)
-
-        # input_block_index does not work for CBC
-        return block_size, initial_pad_size, input_block_index
+        return block_size, initial_pad_size
 
     def find_input_byte_index(self, block_size):
         # Encrypt increasingly long byte strings using the oracle until

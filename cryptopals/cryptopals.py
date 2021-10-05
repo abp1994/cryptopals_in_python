@@ -246,9 +246,9 @@ class Set2:
 
             # For all byte positions along the block (15->0).
             for byte_index in reversed(range(profile.block_size)):
-                buffer = b"0" * byte_index + decryption
+                buffer = b"Z" * byte_index + decryption
                 model_block = oracle.encrypt(
-                    b"0" *
+                    b"Z" *
                     (byte_index))[block_start_byte_index:block_end_byte_index]
 
                 # Test all possible characters against model_block.
@@ -377,7 +377,7 @@ class Set2:
         # Create an input that fills the current block, by using 1 to block_size bytes.
         bytes_to_add = profile.block_size - (profile.input_byte_index %
                                              profile.block_size)
-        block_end_input = b"0" * bytes_to_add
+        block_end_input = b"Z" * bytes_to_add
 
         print(f"Bytes to add               : {bytes_to_add}")
         print(f"Input ending block         : {block_end_input}")
@@ -386,8 +386,8 @@ class Set2:
         data_size_in_blocks = int(
             len(oracle.encrypt(b"")) / profile.block_size)
 
-        print(f"Size of output              : {profile.model_size}")
-        print(f"Size of output in blocks    : {data_size_in_blocks}")
+        print(f"Size of output             : {profile.model_size}")
+        print(f"Size of output in blocks   : {data_size_in_blocks}")
 
         # For all blocks in the data after the prefix blocks.
         for block_index in range(profile.input_block_index + 1,
@@ -397,9 +397,9 @@ class Set2:
 
             # For all byte positions along the block (15->0).
             for byte_position in reversed(range(profile.block_size)):
-                buffer = block_end_input + (b"0" * byte_position) + decryption
+                buffer = block_end_input + (b"Z" * byte_position) + decryption
                 model_block = oracle.encrypt(
-                    block_end_input + (b"0" * (byte_position))
+                    block_end_input + (b"Z" * (byte_position))
                 )[block_start_byte_index:block_end_byte_index]
 
                 # Test all possible characters against model_block.
@@ -411,8 +411,6 @@ class Set2:
                             byte)[block_start_byte_index:block_end_byte_index]:
                         decryption = b"".join([decryption, byte])
                         break
-                    if char == 255:
-                        print("dunno why here")
 
         print(f"Decoded message : \n{decode(bo.depad(decryption))}")
 
