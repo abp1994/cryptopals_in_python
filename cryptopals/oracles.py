@@ -41,7 +41,7 @@ class AESCBC:
         for block in input_message:
             step_1 = bo.xor(iv, block)
             iv = AESECB(self.key).encrypt(step_1)
-            output_message += iv
+            output_message = b"".join([output_message, iv])
         return output_message
 
     def decrypt(self, data):
@@ -50,7 +50,7 @@ class AESCBC:
         input_message = np.frombuffer(data, dtype="uint8").reshape(-1, 16)
         for block in input_message:
             step_1 = AESECB(self.key).decrypt(block)
-            output_message += bo.xor(iv, step_1)
+            output_message = b"".join([output_message, bo.xor(iv, step_1)])
             iv = block
         return output_message
 
@@ -86,11 +86,10 @@ class C12:
 class C14:
     def __init__(self):
         self.random_prefix = secrets.token_bytes(secrets.randbelow(64) + 1)
-        #self.random_prefix = secrets.token_bytes(6 + 16)
         self.oracle = C12()
 
     def encrypt(self, user_bytes):
-        combination = b''.join([self.random_prefix, user_bytes])
+        combination = b"".join([self.random_prefix, user_bytes])
         return self.oracle.encrypt(combination)
 
 
@@ -132,7 +131,7 @@ class Profiler:
         self.model_size = len(self.model_output)
 
         self.mode = self.mode_check()
-        self.block_size, self.initial_pad_size, self.entry_block_index = self.find_block_size(
+        self.block_size, self.initial_pad_size, self.input_block_index = self.find_block_size(
         )
         if self.mode == "ECB":
             self.input_byte_index = self.find_input_byte_index(self.block_size)
@@ -157,7 +156,7 @@ class Profiler:
         while output_size == self.model_size:
 
             # Increase input length by one byte.
-            bytestring += b"0"
+            bytestring = b"".join([bytestring, b"0"])
             output_size = len(self.oracle.encrypt(bytestring))
 
             # Clause for no solution found.
@@ -178,34 +177,32 @@ class Profiler:
         # and then finding the first non zero byte. The
         # index of this block divided by 16 is the block index.
         change = bytearray(bo.xor(new_output, self.model_output))
-        entry_block_index = int(
+        input_block_index = int(
             next(i for i, byte in enumerate(change) if byte) / 16)
 
-        return block_size, initial_pad_size, entry_block_index
+        # input_block_index does not work for CBC
+        return block_size, initial_pad_size, input_block_index
 
     def find_input_byte_index(self, block_size):
         # Encrypt increasingly long byte strings using the oracle until
         # 2 identical blocks are found in the output next to each other.
         # Return the index of the block that matches with a previous block.
 
-        bytestring = b''
+        bytestring = b""
         duplicate_found, duplicate_block_index = bo.detect_adjacent_duplicate_blocks(
             self.oracle.encrypt(bytestring), block_size)
 
         while (not (duplicate_found)):
 
-            bytestring += b'Z'
+            bytestring = b"".join([bytestring, b"Z"])
             duplicate_found, duplicate_block_index = bo.detect_adjacent_duplicate_blocks(
                 self.oracle.encrypt(bytestring), block_size)
 
-            if len(bytestring) > (4 * block_size):
+            if len(bytestring) > (3 * block_size):
                 raise StopIteration("Indeterminate input byte index")
 
-        print(f"match found bs: {bytestring} - {len(bytestring)}")
-        print(f"block index of duplicate: {duplicate_block_index}")
-        print(
-            f"input index byte: {((duplicate_block_index+1)*block_size)-len(bytestring)}"
-        )
+        # The input byte index is found by counting backwards the number of bytes in the
+        # input from the duplicate blocks' location in bytes.
         input_byte_index = (
             (duplicate_block_index + 1) * block_size) - len(bytestring)
         return input_byte_index

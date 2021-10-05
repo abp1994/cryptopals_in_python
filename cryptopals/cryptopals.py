@@ -229,12 +229,11 @@ class Set2:
         oracle = ocl.C12()
         profile = ocl.Profiler(oracle)
 
-        print(f"Detected oracle mode             : {profile.mode}")
-        print(f"Detected block size              : {profile.block_size}")
-        print(
-            f"Detected input entry block index : {profile.entry_block_index}")
-        print(f"Detected input byte index        : {profile.input_byte_index}")
-        print(f"Detected initial pad size        : {profile.initial_pad_size}")
+        print(f"Detected oracle mode       : {profile.mode}")
+        print(f"Detected block size        : {profile.block_size}")
+        print(f"Detected input block index : {profile.input_block_index}")
+        print(f"Detected input byte index  : {profile.input_byte_index}")
+        print(f"Detected initial pad size  : {profile.initial_pad_size}")
 
         decryption = b""
         data_size_in_blocks = int(
@@ -259,7 +258,7 @@ class Set2:
                     if model_block == oracle.encrypt(
                             buffer +
                             byte)[block_start_byte_index:block_end_byte_index]:
-                        decryption += byte
+                        decryption = b"".join([decryption, byte])
                         break
 
         print(f"Decoded message : \n{decode(bo.depad(decryption))}")
@@ -369,33 +368,29 @@ class Set2:
         oracle = ocl.C14()
         profile = ocl.Profiler(oracle)
 
-        print(f"Detected oracle mode             : {profile.mode}")
-        print(f"Detected block size              : {profile.block_size}")
-        print(
-            f"Detected input entry block index : {profile.entry_block_index}")
-        print(f"Detected initial pad size        : {profile.initial_pad_size}")
-        print(f"Detected input byte index        : {profile.input_byte_index}")
-
-        print(f"Size of output                   : {profile.model_size}")
-
-        print(f"To be completed...!")
+        print(f"Detected oracle mode       : {profile.mode}")
+        print(f"Detected block size        : {profile.block_size}")
+        print(f"Detected input block index : {profile.input_block_index}")
+        print(f"Detected initial pad size  : {profile.initial_pad_size}")
+        print(f"Detected input byte index  : {profile.input_byte_index}")
 
         # Create an input that fills the current block, by using 1 to block_size bytes.
         bytes_to_add = profile.block_size - (profile.input_byte_index %
                                              profile.block_size)
         block_end_input = b"0" * bytes_to_add
 
-        print(f"Bytes to add        : {bytes_to_add}")
-        print(f"Input ending block  : {block_end_input}")
+        print(f"Bytes to add               : {bytes_to_add}")
+        print(f"Input ending block         : {block_end_input}")
 
         decryption = b""
         data_size_in_blocks = int(
             len(oracle.encrypt(b"")) / profile.block_size)
 
-        print(f"Size of output in blocks         : {data_size_in_blocks}")
+        print(f"Size of output              : {profile.model_size}")
+        print(f"Size of output in blocks    : {data_size_in_blocks}")
 
         # For all blocks in the data after the prefix blocks.
-        for block_index in range(profile.entry_block_index + 1,
+        for block_index in range(profile.input_block_index + 1,
                                  data_size_in_blocks + 1):
             block_start_byte_index = block_index * profile.block_size
             block_end_byte_index = block_start_byte_index + profile.block_size
@@ -414,25 +409,12 @@ class Set2:
                     if model_block == oracle.encrypt(
                             buffer +
                             byte)[block_start_byte_index:block_end_byte_index]:
-                        decryption += byte
-                        print(f"match found :{decryption}")
+                        decryption = b"".join([decryption, byte])
                         break
                     if char == 255:
-                        yolo = oracle.encrypt(
-                            buffer +
-                            byte)[block_start_byte_index:block_end_byte_index]
+                        print("dunno why here")
 
-                        print(f"block_i: {block_index}")
-                        print(f"byte_i: {byte_position}")
-                        print(f"model: {model_block}")
-                        print(f"model_block:{model_block}")
-                        print(f"crack_block:{yolo}")
-                        raise Exception("No match found")
-
-        print(decryption)
-        """print(
-            f"Decoded message : \n{decode(bo.depad((b'0'*(profile.entry_block_index-1))+decryption))}"
-        )"""
+        print(f"Decoded message : \n{decode(bo.depad(decryption))}")
 
     @staticmethod
     def challenge_15():
@@ -450,7 +432,7 @@ class Set2:
 
 
 def run_challenges():
-    """
+
     Set1.challenge_1()
     Set1.challenge_2()
     Set1.challenge_3()
@@ -459,16 +441,15 @@ def run_challenges():
     Set1.challenge_6()
     Set1.challenge_7()
     Set1.challenge_8()
-
     Set2.challenge_9()
     Set2.challenge_10()
     Set2.challenge_11()
-    """
+
     Set2.challenge_12()
 
-    #Set2.challenge_13()
+    Set2.challenge_13()
     Set2.challenge_14()
-    #Set2.challenge_15()
+    Set2.challenge_15()
 
 
 def main():

@@ -73,10 +73,10 @@ def key_finder(key_size, data):
 def pad(block_size, data):
     # PKCS#7 padding.
     if (len(data) % block_size) == 0:
-        data += bytes([block_size]) * block_size
+        data = b"".join([data, bytes([block_size]) * block_size])
     else:
         pad_size = block_size - len(data) % block_size
-        data += bytes([pad_size]) * pad_size
+        data = b"".join([data, bytes([pad_size]) * pad_size])
     return data
 
 
