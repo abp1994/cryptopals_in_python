@@ -93,6 +93,17 @@ class C14:
         return self.oracle.encrypt(combination)
 
 
+class C16:
+    def __init__(self):
+        self.key = bo.random_AES_key()
+        self.prepend = b"comment1=cooking%20MCs;userdata="
+        self.append = b";comment2=%20like%20a%20pound%20of%20bacon"
+
+    def encrypt(self, user_bytes):
+        data = bo.pad(16, user_bytes + self.secret)
+        return AESECB(self.key).encrypt(data)
+
+
 def profile_create(email):
     data = profile_parse(email)
     padded_data = bo.pad(16, data)
