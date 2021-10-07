@@ -428,10 +428,13 @@ class Set2:
             except Exception as e:
                 print(f"Depad of {i} : {e}")
 
+    @staticmethod
+    def challenge_16():
+        print(f"\n-- Challenge 16 - CBC bitflipping attacks --")
+
 
 def run_challenges():
-
-    Set1.challenge_1()
+    """Set1.challenge_1()
     Set1.challenge_2()
     Set1.challenge_3()
     Set1.challenge_4()
@@ -446,7 +449,8 @@ def run_challenges():
     Set2.challenge_12()
     Set2.challenge_13()
     Set2.challenge_14()
-    Set2.challenge_15()
+    Set2.challenge_15()"""
+    Set2.challenge_16()
 
 
 def main():
