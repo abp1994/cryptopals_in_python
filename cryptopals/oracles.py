@@ -99,9 +99,20 @@ class C16:
         self.prepend = b"comment1=cooking%20MCs;userdata="
         self.append = b";comment2=%20like%20a%20pound%20of%20bacon"
 
-    def encrypt(self, user_bytes):
-        data = bo.pad(16, user_bytes + self.secret)
+    def encrypt(self, user_string):
+        clean_user_string = user_string.replace(";", '";"').replace("=", '"="')
+        byte_string = self.prepend + encode(clean_user_string) + self.append
+        print(byte_string)
+        data = bo.pad(16, byte_string)
         return AESECB(self.key).encrypt(data)
+
+    def decrypt(self, bytes):
+        data = decode(AESECB(self.key).decrypt(bytes))
+        return [tuple(pair.split('=', 1)) for pair in data.split(';')]
+
+    def check_admin(self, bytes):
+        decrypted_fields = self.decrypt(bytes)
+        return ("admin", "true") in decrypted_fields
 
 
 def profile_create(email):

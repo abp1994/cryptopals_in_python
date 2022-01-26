@@ -432,6 +432,11 @@ class Set2:
     def challenge_16():
         print(f"\n-- Challenge 16 - CBC bitflipping attacks --")
 
+        oracle = ocl.C16()
+        ciphertext = oracle.encrypt('hello')
+        print(oracle.decrypt(ciphertext))
+        print(oracle.check_admin(ciphertext))
+
 
 def run_challenges():
     """Set1.challenge_1()
@@ -467,8 +472,8 @@ def main():
     executionTime = (time.time() - startTime)
     print(f'\nExecution time in seconds: {executionTime}')
 
-    print("Press return to exit.")
-    input()
+    #print("Press return to exit.")
+    #input()
 
 
 if __name__ == "__main__":
