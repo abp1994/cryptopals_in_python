@@ -433,9 +433,18 @@ class Set2:
         print(f"\n-- Challenge 16 - CBC bitflipping attacks --")
 
         oracle = ocl.C16()
-        ciphertext = oracle.encrypt('hello')
+        ciphertext = oracle.encrypt(b"decoy;dmi=rue")
         print(oracle.decrypt(ciphertext))
         print(oracle.check_admin(ciphertext))
+
+        # Create a new ciphertext with an added admin=true field.
+        profile = ocl.Profiler(oracle)
+
+        print(f"Detected oracle mode       : {profile.mode}")
+        print(f"Detected block size        : {profile.block_size}")
+        print(f"Detected input block index : {profile.input_block_index}")
+        print(f"Detected initial pad size  : {profile.initial_pad_size}")
+        print(f"Detected input byte index  : {profile.input_byte_index}")
 
 
 def run_challenges():

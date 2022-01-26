@@ -95,19 +95,20 @@ class C14:
 
 class C16:
     def __init__(self):
+        self.iv = bo.random_AES_key()
         self.key = bo.random_AES_key()
         self.prepend = b"comment1=cooking%20MCs;userdata="
         self.append = b";comment2=%20like%20a%20pound%20of%20bacon"
 
-    def encrypt(self, user_string):
+    def encrypt(self, user_bytes):
+        user_string = decode(user_bytes)
         clean_user_string = user_string.replace(";", '";"').replace("=", '"="')
         byte_string = self.prepend + encode(clean_user_string) + self.append
-        print(byte_string)
         data = bo.pad(16, byte_string)
-        return AESECB(self.key).encrypt(data)
+        return AESCBC(self.iv, self.key).encrypt(data)
 
     def decrypt(self, bytes):
-        data = decode(AESECB(self.key).decrypt(bytes))
+        data = decode(AESCBC(self.iv, self.key).decrypt(bytes))
         return [tuple(pair.split('=', 1)) for pair in data.split(';')]
 
     def check_admin(self, bytes):
@@ -145,7 +146,7 @@ def ECB_check(oracle):
     return True if 0 < duplicate_blocks else False
 
 
-#Functions used to profile an encryption oracle.
+# Functions used to profile an encryption oracle.
 class Profiler:
     def __init__(self, oracle):
         self.oracle = oracle
