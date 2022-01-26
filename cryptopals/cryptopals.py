@@ -230,6 +230,7 @@ class Set2:
         profile = ocl.Profiler(oracle)
 
         print(f"Detected oracle mode       : {profile.mode}")
+        print(f"Detected bytes in output   : {profile.model_size}")
         print(f"Detected block size        : {profile.block_size}")
         print(f"Detected input block index : {profile.input_block_index}")
         print(f"Detected input byte index  : {profile.input_byte_index}")
@@ -369,6 +370,7 @@ class Set2:
         profile = ocl.Profiler(oracle)
 
         print(f"Detected oracle mode       : {profile.mode}")
+        print(f"Detected bytes in output   : {profile.model_size}")
         print(f"Detected block size        : {profile.block_size}")
         print(f"Detected input block index : {profile.input_block_index}")
         print(f"Detected initial pad size  : {profile.initial_pad_size}")
@@ -441,6 +443,7 @@ class Set2:
         profile = ocl.Profiler(oracle)
 
         print(f"Detected oracle mode       : {profile.mode}")
+        print(f"Detected bytes in output   : {profile.model_size}")
         print(f"Detected block size        : {profile.block_size}")
         print(f"Detected input block index : {profile.input_block_index}")
         print(f"Detected initial pad size  : {profile.initial_pad_size}")
