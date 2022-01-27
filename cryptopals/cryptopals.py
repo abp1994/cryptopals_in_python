@@ -454,7 +454,7 @@ class Set2:
 
         # Target character properties.
         target_character_index = 0
-        target_character_decrypted = crack_input[0]
+        target_character_decrypted = crack_input[target_character_index]
         print(
             f"Flip target character decrypted: {bytes([target_character_decrypted])}"
         )
@@ -480,10 +480,40 @@ class Set2:
 
         improved_ciphertext = bytearray(ciphertext)
         improved_ciphertext[flip_inducing_character_index] = replacement_byte
-        improved_ciphertext3 = bytes(improved_ciphertext)
+        improved_ciphertext2 = bytes(improved_ciphertext)
 
-        print(oracle.decrypt(improved_ciphertext3))
-        print(oracle.check_admin(improved_ciphertext))
+        # Target character properties.
+        target_character_index = 6
+        target_character_decrypted = crack_input[target_character_index]
+        print(
+            f"Flip target character decrypted: {bytes([target_character_decrypted])}"
+        )
+
+        # Find flip inducing character (1 block before target).
+        flip_inducing_character_index = known_prefix_length - profile.block_size + target_character_index
+        flip_inducing_character = known_prefix[flip_inducing_character_index]
+        print(f"Flip inducing character : {bytes([flip_inducing_character])}")
+
+        encrypted_flip_inducing_character = ciphertext[
+            flip_inducing_character_index]
+        print(
+            f"Encrypted result character : {bytes([encrypted_flip_inducing_character])}"
+        )
+
+        # Desired replacement character.
+        injection_character = ord("=")
+
+        # Replace the target character with the injection character.
+        block_cipher_decryption_byte = encrypted_flip_inducing_character ^ target_character_decrypted
+        replacement_byte = block_cipher_decryption_byte ^ injection_character
+        print(bytes([replacement_byte]))
+
+        improved_ciphertext3 = bytearray(improved_ciphertext2)
+        improved_ciphertext3[flip_inducing_character_index] = replacement_byte
+        improved_ciphertext4 = bytes(improved_ciphertext3)
+
+        print(oracle.decrypt(improved_ciphertext4))
+        print(oracle.check_admin(improved_ciphertext4))
 
 
 def run_challenges():
