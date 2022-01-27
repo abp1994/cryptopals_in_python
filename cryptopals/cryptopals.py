@@ -435,11 +435,6 @@ class Set2:
         print(f"\n-- Challenge 16 - CBC bitflipping attacks --")
 
         oracle = ocl.C16()
-        ciphertext = oracle.encrypt(b"decoy;dmi=rue")
-        print(oracle.decrypt(ciphertext))
-        print(oracle.check_admin(ciphertext))
-
-        # Create a new ciphertext with an added admin=true field.
         profile = ocl.Profiler(oracle)
 
         print(f"Detected oracle mode       : {profile.mode}")
@@ -448,6 +443,43 @@ class Set2:
         print(f"Detected input block index : {profile.input_block_index}")
         print(f"Detected initial pad size  : {profile.initial_pad_size}")
         print(f"Detected input byte index  : {profile.input_byte_index}")
+
+        crack_input = encode(",admin-true")
+        ciphertext = oracle.encrypt(crack_input)
+
+        known_prefix = b"comment1=cooking%20MCs;userdata="
+        known_prefix_length = len(known_prefix)  # 32 bytes long.
+
+        # Find character 1 block before bit flip target character.
+        flip_inducing_character_index = known_prefix_length - profile.block_size
+        flip_inducing_character = known_prefix[flip_inducing_character_index]
+        print(f"Flip inducing character : {bytes([flip_inducing_character])}")
+
+        flip_target_character_index = known_prefix_length
+        flip_target_character_decrypted = crack_input[0]
+        print(
+            f"Flip target character decrypted: {bytes([flip_target_character_decrypted])}"
+        )
+
+        encrypted_flip_inducing_character = ciphertext[
+            flip_inducing_character_index]
+        print(
+            f"Encrypted result character : {bytes([encrypted_flip_inducing_character])}"
+        )
+
+        ideal_character = ord(";")
+
+        yolo = encrypted_flip_inducing_character ^ flip_target_character_decrypted
+
+        yolo2 = yolo ^ ideal_character
+        print(bytes([yolo2]))
+
+        improved_ciphertext = bytearray(ciphertext)
+        improved_ciphertext[flip_inducing_character_index] = yolo2
+        improved_ciphertext3 = bytes(improved_ciphertext)
+
+        print(oracle.decrypt(improved_ciphertext3))
+        print(oracle.check_admin(improved_ciphertext))
 
 
 def run_challenges():
