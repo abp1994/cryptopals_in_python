@@ -117,9 +117,41 @@ def detect_adjacent_duplicate_blocks(data, block_size):
     return duplicate_found, duplicate_block_index
 
 
-def CBC_bit_flipper(prefix_length, input_bytes, encryption, block_size,
-                    target_index, target_value):
-    pass
+def CBC_bit_flipper(prefix_bytes, input_butes, ciphertext, block_size,
+                    target_character_index, injection_character):
+
+    prefix_bytes_length = len(prefix_bytes)
+
+    # Target character properties.
+    target_character_decrypted = input_butes[target_character_index]
+
+    # Find flip inducing character (1 block before target).
+    flip_inducing_character_index = prefix_bytes_length - block_size + target_character_index
+    flip_inducing_character = prefix_bytes[flip_inducing_character_index]
+
+    encrypted_flip_inducing_character = ciphertext[
+        flip_inducing_character_index]
+
+    # Replace the target character with the injection character.
+    block_cipher_decryption_byte = encrypted_flip_inducing_character ^ target_character_decrypted
+    replacement_byte = block_cipher_decryption_byte ^ ord(injection_character)
+
+    print(
+        f"Flip target character decrypted : {bytes([target_character_decrypted])}"
+    )
+    print(
+        f"Flip inducing character         : {bytes([flip_inducing_character])}"
+    )
+    print(
+        f"Encrypted result character      : {bytes([encrypted_flip_inducing_character])}"
+    )
+    print(f"Replacement character           : {bytes([replacement_byte])}")
+
+    # Inject replacement character into ciphertext.
+    bit_flipped_ciphertext = bytearray(ciphertext)
+    bit_flipped_ciphertext[flip_inducing_character_index] = replacement_byte
+
+    return bytes(bit_flipped_ciphertext)
 
 
 class text_scorer:

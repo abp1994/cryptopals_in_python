@@ -109,10 +109,8 @@ class C16:
         return AESCBC(self.iv, self.key).encrypt(data)
 
     def decrypt(self, bytes):
-        data = (AESCBC(self.iv, self.key).decrypt(bytes))
-        print(data)
-        data2 = decode(data)
-        return [tuple(pair.split('=', 1)) for pair in data2.split(';')]
+        data = decode(AESCBC(self.iv, self.key).decrypt(bytes))
+        return [tuple(pair.split('=', 1)) for pair in data.split(';')]
 
     def check_admin(self, bytes):
         decrypted_fields = self.decrypt(bytes)

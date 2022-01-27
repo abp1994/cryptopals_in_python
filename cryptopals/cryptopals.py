@@ -452,68 +452,20 @@ class Set2:
         crack_input = b",admin-true"
         ciphertext = oracle.encrypt(crack_input)
 
-        # Target character properties.
-        target_character_index = 0
-        target_character_decrypted = crack_input[target_character_index]
+        bit_flipped_ciphertext_1 = bo.CBC_bit_flipper(known_prefix,
+                                                      crack_input, ciphertext,
+                                                      profile.block_size, 0,
+                                                      ";")
+
+        bit_flipped_ciphertext_2 = bo.CBC_bit_flipper(
+            known_prefix, crack_input, bit_flipped_ciphertext_1,
+            profile.block_size, 6, "=")
+
+        # Check decryption.
+        print(oracle.decrypt(bit_flipped_ciphertext_2))
         print(
-            f"Flip target character decrypted: {bytes([target_character_decrypted])}"
+            f"Admin property present : {oracle.check_admin(bit_flipped_ciphertext_2)}"
         )
-
-        # Find flip inducing character (1 block before target).
-        flip_inducing_character_index = known_prefix_length - profile.block_size + target_character_index
-        flip_inducing_character = known_prefix[flip_inducing_character_index]
-        print(f"Flip inducing character : {bytes([flip_inducing_character])}")
-
-        encrypted_flip_inducing_character = ciphertext[
-            flip_inducing_character_index]
-        print(
-            f"Encrypted result character : {bytes([encrypted_flip_inducing_character])}"
-        )
-
-        # Desired replacement character.
-        injection_character = ord(";")
-
-        # Replace the target character with the injection character.
-        block_cipher_decryption_byte = encrypted_flip_inducing_character ^ target_character_decrypted
-        replacement_byte = block_cipher_decryption_byte ^ injection_character
-        print(bytes([replacement_byte]))
-
-        improved_ciphertext = bytearray(ciphertext)
-        improved_ciphertext[flip_inducing_character_index] = replacement_byte
-        improved_ciphertext2 = bytes(improved_ciphertext)
-
-        # Target character properties.
-        target_character_index = 6
-        target_character_decrypted = crack_input[target_character_index]
-        print(
-            f"Flip target character decrypted: {bytes([target_character_decrypted])}"
-        )
-
-        # Find flip inducing character (1 block before target).
-        flip_inducing_character_index = known_prefix_length - profile.block_size + target_character_index
-        flip_inducing_character = known_prefix[flip_inducing_character_index]
-        print(f"Flip inducing character : {bytes([flip_inducing_character])}")
-
-        encrypted_flip_inducing_character = ciphertext[
-            flip_inducing_character_index]
-        print(
-            f"Encrypted result character : {bytes([encrypted_flip_inducing_character])}"
-        )
-
-        # Desired replacement character.
-        injection_character = ord("=")
-
-        # Replace the target character with the injection character.
-        block_cipher_decryption_byte = encrypted_flip_inducing_character ^ target_character_decrypted
-        replacement_byte = block_cipher_decryption_byte ^ injection_character
-        print(bytes([replacement_byte]))
-
-        improved_ciphertext3 = bytearray(improved_ciphertext2)
-        improved_ciphertext3[flip_inducing_character_index] = replacement_byte
-        improved_ciphertext4 = bytes(improved_ciphertext3)
-
-        print(oracle.decrypt(improved_ciphertext4))
-        print(oracle.check_admin(improved_ciphertext4))
 
 
 def run_challenges():
