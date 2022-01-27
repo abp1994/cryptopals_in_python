@@ -467,6 +467,12 @@ class Set2:
         )
 
 
+class Set3:
+    @staticmethod
+    def challenge_17():
+        print(f"\n-- Challenge 17 - The CBC padding oracle --")
+
+
 def run_challenges():
     Set1.challenge_1()
     Set1.challenge_2()
@@ -485,6 +491,8 @@ def run_challenges():
     Set2.challenge_14()
     Set2.challenge_15()
     Set2.challenge_16()
+
+    Set2.challenge_17()
 
 
 def main():
