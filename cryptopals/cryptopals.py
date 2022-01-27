@@ -462,14 +462,14 @@ class Set2:
             profile.block_size, 6, "=")
 
         # Check decryption.
-        print(oracle.decrypt(bit_flipped_ciphertext_2))
+        print(f"Decrypted data : \n{oracle.decrypt(bit_flipped_ciphertext_2)}")
         print(
             f"Admin property present : {oracle.check_admin(bit_flipped_ciphertext_2)}"
         )
 
 
 def run_challenges():
-    """Set1.challenge_1()
+    Set1.challenge_1()
     Set1.challenge_2()
     Set1.challenge_3()
     Set1.challenge_4()
@@ -484,7 +484,7 @@ def run_challenges():
     Set2.challenge_12()
     Set2.challenge_13()
     Set2.challenge_14()
-    Set2.challenge_15()"""
+    Set2.challenge_15()
     Set2.challenge_16()
 
 
