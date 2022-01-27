@@ -446,7 +446,6 @@ class Set2:
 
         # Known properties of oracle.
         known_prefix = b"comment1=cooking%20MCs;userdata="
-        known_prefix_length = len(known_prefix)  # 32 bytes long.
 
         # Create an input that is similar to the desired injection.
         crack_input = b",admin-true"
