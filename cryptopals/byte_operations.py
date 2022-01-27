@@ -117,6 +117,11 @@ def detect_adjacent_duplicate_blocks(data, block_size):
     return duplicate_found, duplicate_block_index
 
 
+def CBC_bit_flipper(prefix_length, input_bytes, encryption, block_size,
+                    target_index, target_value):
+    pass
+
+
 class text_scorer:
     # http://cs.wellesley.edu/~fturbak/codman/letterfreq.html
     char_frequencies = [

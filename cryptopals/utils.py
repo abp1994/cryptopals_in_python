@@ -24,7 +24,7 @@ def encode(text):
 
 
 def decode(byte_array):
-    return byte_array.decode("utf-8")
+    return byte_array.decode("utf-8", errors='ignore')
 
 
 def function_stats(function):

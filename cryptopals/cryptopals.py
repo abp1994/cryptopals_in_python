@@ -444,22 +444,25 @@ class Set2:
         print(f"Detected initial pad size  : {profile.initial_pad_size}")
         print(f"Detected input byte index  : {profile.input_byte_index}")
 
-        crack_input = encode(",admin-true")
-        ciphertext = oracle.encrypt(crack_input)
-
+        # Known properties of oracle.
         known_prefix = b"comment1=cooking%20MCs;userdata="
         known_prefix_length = len(known_prefix)  # 32 bytes long.
 
-        # Find character 1 block before bit flip target character.
-        flip_inducing_character_index = known_prefix_length - profile.block_size
+        # Create an input that is similar to the desired injection.
+        crack_input = b",admin-true"
+        ciphertext = oracle.encrypt(crack_input)
+
+        # Target character properties.
+        target_character_index = 0
+        target_character_decrypted = crack_input[0]
+        print(
+            f"Flip target character decrypted: {bytes([target_character_decrypted])}"
+        )
+
+        # Find flip inducing character (1 block before target).
+        flip_inducing_character_index = known_prefix_length - profile.block_size + target_character_index
         flip_inducing_character = known_prefix[flip_inducing_character_index]
         print(f"Flip inducing character : {bytes([flip_inducing_character])}")
-
-        flip_target_character_index = known_prefix_length
-        flip_target_character_decrypted = crack_input[0]
-        print(
-            f"Flip target character decrypted: {bytes([flip_target_character_decrypted])}"
-        )
 
         encrypted_flip_inducing_character = ciphertext[
             flip_inducing_character_index]
@@ -467,15 +470,16 @@ class Set2:
             f"Encrypted result character : {bytes([encrypted_flip_inducing_character])}"
         )
 
-        ideal_character = ord(";")
+        # Desired replacement character.
+        injection_character = ord(";")
 
-        yolo = encrypted_flip_inducing_character ^ flip_target_character_decrypted
-
-        yolo2 = yolo ^ ideal_character
-        print(bytes([yolo2]))
+        # Replace the target character with the injection character.
+        block_cipher_decryption_byte = encrypted_flip_inducing_character ^ target_character_decrypted
+        replacement_byte = block_cipher_decryption_byte ^ injection_character
+        print(bytes([replacement_byte]))
 
         improved_ciphertext = bytearray(ciphertext)
-        improved_ciphertext[flip_inducing_character_index] = yolo2
+        improved_ciphertext[flip_inducing_character_index] = replacement_byte
         improved_ciphertext3 = bytes(improved_ciphertext)
 
         print(oracle.decrypt(improved_ciphertext3))
