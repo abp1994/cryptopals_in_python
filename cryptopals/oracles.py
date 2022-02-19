@@ -1,7 +1,6 @@
 import secrets
 import sys
 from base64 import b64decode
-from dataclasses import dataclass
 from pathlib import Path
 
 import numpy as np
