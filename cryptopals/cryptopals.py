@@ -492,7 +492,7 @@ def run_challenges():
     Set2.challenge_15()
     Set2.challenge_16()
 
-    Set2.challenge_17()
+    Set3.challenge_17()
 
 
 def main():
