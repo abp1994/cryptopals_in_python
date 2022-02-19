@@ -25,6 +25,7 @@ class Set1:
         print(f"Hex ciphertext : {hex_ciphertext}")
         print(f"Plaintext      : {decode(data)}")
         print(f"Base 64 encode : {decode(B64_encode)}")
+        return B64_encode
 
     @staticmethod
     def challenge_2():
@@ -474,25 +475,27 @@ class Set3:
 
 
 def run_challenges():
-    Set1.challenge_1()
-    Set1.challenge_2()
-    Set1.challenge_3()
-    Set1.challenge_4()
-    Set1.challenge_5()
-    Set1.challenge_6()
-    Set1.challenge_7()
-    Set1.challenge_8()
+    results = {
+        "S1C1": Set1.challenge_1(),
+        "S1C2": Set1.challenge_2(),
+        "S1C3": Set1.challenge_3(),
+        "S1C4": Set1.challenge_4(),
+        "S1C5": Set1.challenge_5(),
+        "S1C6": Set1.challenge_6(),
+        "S1C7": Set1.challenge_7(),
+        "S1C8": Set1.challenge_8(),
+        "S2C9": Set2.challenge_9(),
+        "S2C10": Set2.challenge_10(),
+        "S2C11": Set2.challenge_11(),
+        "S2C12": Set2.challenge_12(),
+        "S2C13": Set2.challenge_13(),
+        "S2C14": Set2.challenge_14(),
+        "S2C15": Set2.challenge_15(),
+        "S2C16": Set2.challenge_16(),
+        "S3C17": Set3.challenge_17(),
+    }
 
-    Set2.challenge_9()
-    Set2.challenge_10()
-    Set2.challenge_11()
-    Set2.challenge_12()
-    Set2.challenge_13()
-    Set2.challenge_14()
-    Set2.challenge_15()
-    Set2.challenge_16()
-
-    Set2.challenge_17()
+    return results
 
 
 def main():
@@ -504,13 +507,12 @@ def main():
     # function_stats('set_1.challenge_4()')
     # print(sys.path)
 
-    run_challenges()
+    results = run_challenges()
 
     executionTime = (time.time() - startTime)
     print(f'\nExecution time in seconds: {executionTime}')
 
-    #print("Press return to exit.")
-    #input()
+    return results
 
 
 if __name__ == "__main__":

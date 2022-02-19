@@ -2,7 +2,7 @@ import sys
 import unittest
 from pathlib import Path
 
-sys.path.append(str(Path(__file__).parents[1].resolve()))
+sys.path.append(str(Path(__file__).parents[2].resolve()))
 import byte_operations as bo
 
 
