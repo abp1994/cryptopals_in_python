@@ -3,13 +3,12 @@ import unittest
 from pathlib import Path
 
 sys.path.append(str(Path(__file__).parents[2].resolve()))
-import cryptopals as c
+import cryptopals
 
 
 class TestCryptopals(unittest.TestCase):
-    def test_encode(self):
-        self.assertEqual(c.encode('Hello World'),
-                         'Hello World'.encode("utf-8"))
+    def test_C1(self):
+        pass
 
 
 if __name__ == "__main__":
