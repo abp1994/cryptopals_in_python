@@ -132,7 +132,7 @@ class C17:
         ciphertext = AESCBC(self.iv, self.key).encrypt(data)
         return ciphertext, self.iv
 
-    def decryption_possible(self, bytes, iv):
+    def depad_possible(self, bytes, iv):
         data = AESCBC(iv, self.key).decrypt(bytes)
         #try depadding data catch error
         try:
