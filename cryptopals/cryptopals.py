@@ -473,10 +473,16 @@ class Set3:
     def challenge_17():
         print(f"\n-- Challenge 17 - The CBC padding oracle --")
 
+        oracle = ocl.C17()
+        ciphertext, iv = oracle.encrypt()
+        print(oracle.decryption_possible(ciphertext, iv))
+
 
 def run_challenges():
     results = {
-        "S1C1": Set1.challenge_1(),
+        "S3C17": Set3.challenge_17(),
+    }
+    """   "S1C1": Set1.challenge_1(),
         "S1C2": Set1.challenge_2(),
         "S1C3": Set1.challenge_3(),
         "S1C4": Set1.challenge_4(),
@@ -491,9 +497,7 @@ def run_challenges():
         "S2C13": Set2.challenge_13(),
         "S2C14": Set2.challenge_14(),
         "S2C15": Set2.challenge_15(),
-        "S2C16": Set2.challenge_16(),
-        "S3C17": Set3.challenge_17(),
-    }
+        "S2C16": Set2.challenge_16(),"""
 
     return results
 

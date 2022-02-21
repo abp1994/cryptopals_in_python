@@ -1,3 +1,4 @@
+import random
 import secrets
 import sys
 from base64 import b64decode
@@ -8,6 +9,7 @@ from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 
 sys.path.append(str(Path(__file__).parent.resolve()))
+
 import byte_operations as bo
 import utils as ut
 from utils import decode, encode
@@ -114,6 +116,32 @@ class C16:
     def check_admin(self, bytes):
         decrypted_fields = self.decrypt(bytes)
         return ("admin", "true") in decrypted_fields
+
+
+class C17:
+    def __init__(self):
+        self.iv = bo.random_AES_key()
+        self.key = bo.random_AES_key()
+
+        file_name = "data_S3C17.txt"
+        self.data = encode(
+            random.choice(ut.import_data(file_name).splitlines()))
+
+    def encrypt(self):
+        data = bo.pad(16, self.data)
+        ciphertext = AESCBC(self.iv, self.key).encrypt(data)
+        return ciphertext, self.iv
+
+    def decryption_possible(self, bytes, iv):
+        data = AESCBC(iv, self.key).decrypt(bytes)
+        #try depadding data catch error
+        try:
+            bo.depad(data)
+            outcome = True
+        except ValueError:
+            outcome = False
+
+        return outcome
 
 
 def profile_create(email):
