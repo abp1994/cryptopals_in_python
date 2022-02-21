@@ -475,7 +475,7 @@ class Set3:
 
         oracle = ocl.C17()
         ciphertext, iv = oracle.encrypt()
-        print(oracle.depad_possible(ciphertext, iv))
+        print(oracle.depad_possible(b'ehydirjshdufnetr', iv))
 
 
 def run_challenges():
