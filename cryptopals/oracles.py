@@ -143,6 +143,9 @@ class C17:
 
         return outcome
 
+    def reveal(self):
+        return bo.pad(16, self.data)
+
 
 def profile_create(email):
     data = profile_parse(email)

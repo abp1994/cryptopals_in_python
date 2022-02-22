@@ -2,6 +2,7 @@ import sys
 import time
 from base64 import b64decode, b64encode
 from collections import Counter
+from operator import ne
 from pathlib import Path
 
 sys.path.append(str(Path(__file__).parent.resolve()))
@@ -475,7 +476,41 @@ class Set3:
 
         oracle = ocl.C17()
         ciphertext, iv = oracle.encrypt()
-        print(oracle.depad_possible(b'ehydirjshdufnetr', iv))
+
+        # Find output size.
+        block_size = 16
+        output_size = len(ciphertext)
+        model_size = int(len(ciphertext) / block_size)
+
+        print(f"Assumed Block Size   : {block_size}")
+        print(f"Output size in bytes : {output_size}")
+        print(f"Number of Blocks     : {model_size}")
+        print(f"revealed data        : {oracle.reveal()}")
+        print(f"revealed data depad  : {bo.depad(oracle.reveal())}")
+        print(f"Data length          : {len(bo.depad(oracle.reveal()))}")
+
+        # Find the last byte
+        injection_byte_index = output_size - block_size - 1
+        print(f"Injection byte index : {injection_byte_index}")
+
+        def single_byte_pad_crack(ciphertext, iv, index):
+            crack_ciphertext = bytearray(ciphertext)
+            for byte in range(255):
+                crack_ciphertext[index] = byte
+                if (oracle.depad_possible(crack_ciphertext, iv)):
+                    break
+            return byte
+
+        valid_pad_byte = single_byte_pad_crack(ciphertext, iv,
+                                               injection_byte_index)
+        print(f"Valid injection byte : {bytes([valid_pad_byte])}")
+
+        decrypted_byte = 1 ^ ciphertext[injection_byte_index] ^ valid_pad_byte
+        print(f"Decrypted byte       : {bytes([decrypted_byte])}")
+
+        next_byte_input = ciphertext[injection_byte_index -
+                                     1] ^ decrypted_byte ^ 2
+        print(next_byte_input)
 
 
 def run_challenges():
