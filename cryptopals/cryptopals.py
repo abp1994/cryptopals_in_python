@@ -43,6 +43,7 @@ class Set1:
         print(f"Hex key                 : {hex_key}")
         print(f"XOR decrypted plaintext : {decode(decrypted_data)}")
         print(f"Hex encode              : {decrypted_data.hex()}")
+        return decrypted_data.hex()
 
     @staticmethod
     def challenge_3():
@@ -95,6 +96,7 @@ class Set1:
         print(f"Key                                : {key}")
         print(f"Plaintext                          : \n{stanza}")
         print(f"Repeating key encrypt (hex encode) : {ciphertext.hex()}")
+        return (ciphertext.hex())
 
     @staticmethod
     def challenge_6():
@@ -178,6 +180,7 @@ class Set2:
         size = 20
         print(f"{data} padded to {size} bytes using PKCS#7 : "
               f"{bo.pad(size, data)}")
+        return bo.pad(size, data)
 
     @staticmethod
     def challenge_10():
@@ -363,6 +366,7 @@ class Set2:
         print(f"Attacker encrypted profile   : {attacker_encrypted_profile}")
         print(f"Attacker decrypted profile   : {attacker_decrypted_profile}")
         print(f"Attacker  profile            : {attacker_profile}")
+        return attacker_profile
 
     @staticmethod
     def challenge_14():
@@ -514,27 +518,28 @@ class Set3:
 
 
 def run_challenges():
-    results = {
-        "S3C17": Set3.challenge_17(),
-    }
-    """   "S1C1": Set1.challenge_1(),
-        "S1C2": Set1.challenge_2(),
-        "S1C3": Set1.challenge_3(),
-        "S1C4": Set1.challenge_4(),
-        "S1C5": Set1.challenge_5(),
-        "S1C6": Set1.challenge_6(),
-        "S1C7": Set1.challenge_7(),
-        "S1C8": Set1.challenge_8(),
-        "S2C9": Set2.challenge_9(),
-        "S2C10": Set2.challenge_10(),
-        "S2C11": Set2.challenge_11(),
-        "S2C12": Set2.challenge_12(),
-        "S2C13": Set2.challenge_13(),
-        "S2C14": Set2.challenge_14(),
-        "S2C15": Set2.challenge_15(),
-        "S2C16": Set2.challenge_16(),"""
+    # Set 1
+    Set1.challenge_1()
+    Set1.challenge_2()
+    Set1.challenge_3()
+    Set1.challenge_4()
+    Set1.challenge_5()
+    Set1.challenge_6()
+    Set1.challenge_7()
+    Set1.challenge_8()
 
-    return results
+    # Set 2
+    Set2.challenge_9()
+    Set2.challenge_10()
+    Set2.challenge_11()
+    Set2.challenge_12()
+    Set2.challenge_13()
+    Set2.challenge_14()
+    Set2.challenge_15()
+    Set2.challenge_16()
+
+    # Set 3
+    Set3.challenge_17()
 
 
 def main():
@@ -550,8 +555,6 @@ def main():
 
     executionTime = (time.time() - startTime)
     print(f'\nExecution time in seconds: {executionTime}')
-
-    return results
 
 
 if __name__ == "__main__":
