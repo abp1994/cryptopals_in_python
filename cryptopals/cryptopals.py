@@ -551,7 +551,7 @@ def main():
     # function_stats('set_1.challenge_4()')
     # print(sys.path)
 
-    results = run_challenges()
+    run_challenges()
 
     executionTime = (time.time() - startTime)
     print(f'\nExecution time in seconds: {executionTime}')
