@@ -23,7 +23,7 @@ class Testbyte_operations(unittest.TestCase):
 
         self.assertEqual(
             bo.edit_distance(b'this is a test', b'this is a test'), 0)
-        self.assertEqual(bo.edit_distance(b'this ', b'that'), 4)
+        self.assertEqual(bo.edit_distance(b'this thing', b'that thing'), 4)
         self.assertEqual(
             bo.edit_distance(b'this is a test', b'wokka wokka!!!'), 37)
 
@@ -33,6 +33,20 @@ class Testbyte_operations(unittest.TestCase):
         self.assertEqual(bo.single_byte_xor(b'\x01', b'\x01'), b'\x00')
         self.assertEqual(bo.single_byte_xor(b'\x00', b'\x01'), b'\x01')
         self.assertEqual(bo.single_byte_xor(b'\x01', b'\x00'), b'\x01')
+
+    def test_pad(self):
+
+        self.assertEqual(bo.pad(3, b''), b'\x03\x03\x03')
+        self.assertEqual(bo.pad(2, b'test'), b'test\x02\x02')
+        self.assertEqual(bo.pad(4, b'test'), b'test\x04\x04\x04\x04')
+        self.assertEqual(bo.pad(10, b'test'), b'test\x06\x06\x06\x06\x06\x06')
+
+    def test_unpad(self):
+
+        self.assertEqual(bo.unpad(b'\x03\x03\x03'), b'')
+        self.assertEqual(bo.unpad(b'test\x02\x02'), b'test')
+        self.assertEqual(bo.unpad(b'test\x04\x04\x04\x04'), b'test')
+        self.assertEqual(bo.unpad(b'test\x06\x06\x06\x06\x06\x06'), b'test')
 
 
 if __name__ == "__main__":
