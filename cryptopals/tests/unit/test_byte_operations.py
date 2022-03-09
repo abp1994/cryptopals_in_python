@@ -41,12 +41,16 @@ class Testbyte_operations(unittest.TestCase):
         self.assertEqual(bo.pad(4, b'test'), b'test\x04\x04\x04\x04')
         self.assertEqual(bo.pad(10, b'test'), b'test\x06\x06\x06\x06\x06\x06')
 
-    def test_unpad(self):
+    def test_depad(self):
 
-        self.assertEqual(bo.unpad(b'\x03\x03\x03'), b'')
-        self.assertEqual(bo.unpad(b'test\x02\x02'), b'test')
-        self.assertEqual(bo.unpad(b'test\x04\x04\x04\x04'), b'test')
-        self.assertEqual(bo.unpad(b'test\x06\x06\x06\x06\x06\x06'), b'test')
+        self.assertEqual(bo.depad(b'\x03\x03\x03'), b'')
+        self.assertEqual(bo.depad(b'test\x02\x02'), b'test')
+        self.assertEqual(bo.depad(b'test\x04\x04\x04\x04'), b'test')
+        self.assertEqual(bo.depad(b'test\x06\x06\x06\x06\x06\x06'), b'test')
+
+    def test_random_AES_key(self):
+
+        self.assertEqual(len(bo.random_AES_key()), 16)
 
 
 if __name__ == "__main__":
