@@ -2,6 +2,7 @@ import sys
 import time
 from base64 import b64decode, b64encode
 from collections import Counter
+from operator import ne
 from pathlib import Path
 
 sys.path.append(str(Path(__file__).parent.resolve()))
@@ -42,6 +43,7 @@ class Set1:
         print(f"Hex key                 : {hex_key}")
         print(f"XOR decrypted plaintext : {decode(decrypted_data)}")
         print(f"Hex encode              : {decrypted_data.hex()}")
+        return decrypted_data.hex()
 
     @staticmethod
     def challenge_3():
@@ -94,6 +96,7 @@ class Set1:
         print(f"Key                                : {key}")
         print(f"Plaintext                          : \n{stanza}")
         print(f"Repeating key encrypt (hex encode) : {ciphertext.hex()}")
+        return (ciphertext.hex())
 
     @staticmethod
     def challenge_6():
@@ -177,6 +180,7 @@ class Set2:
         size = 20
         print(f"{data} padded to {size} bytes using PKCS#7 : "
               f"{bo.pad(size, data)}")
+        return bo.pad(size, data)
 
     @staticmethod
     def challenge_10():
@@ -362,6 +366,7 @@ class Set2:
         print(f"Attacker encrypted profile   : {attacker_encrypted_profile}")
         print(f"Attacker decrypted profile   : {attacker_decrypted_profile}")
         print(f"Attacker  profile            : {attacker_profile}")
+        return attacker_profile
 
     @staticmethod
     def challenge_14():
@@ -473,29 +478,68 @@ class Set3:
     def challenge_17():
         print(f"\n-- Challenge 17 - The CBC padding oracle --")
 
+        oracle = ocl.C17()
+        ciphertext, iv = oracle.encrypt()
+
+        # Find output size.
+        block_size = 16
+        output_size = len(ciphertext)
+        model_size = int(len(ciphertext) / block_size)
+
+        print(f"Assumed Block Size   : {block_size}")
+        print(f"Output size in bytes : {output_size}")
+        print(f"Number of Blocks     : {model_size}")
+        print(f"revealed data        : {oracle.reveal()}")
+        print(f"revealed data depad  : {bo.depad(oracle.reveal())}")
+        print(f"Data length          : {len(bo.depad(oracle.reveal()))}")
+
+        # Find the last byte
+        injection_byte_index = output_size - block_size - 1
+        print(f"Injection byte index : {injection_byte_index}")
+
+        def single_byte_pad_crack(ciphertext, iv, index):
+            crack_ciphertext = bytearray(ciphertext)
+            for byte in range(255):
+                crack_ciphertext[index] = byte
+                if (oracle.depad_possible(crack_ciphertext, iv)):
+                    break
+            return byte
+
+        valid_pad_byte = single_byte_pad_crack(ciphertext, iv,
+                                               injection_byte_index)
+        print(f"Valid injection byte : {bytes([valid_pad_byte])}")
+
+        decrypted_byte = 1 ^ ciphertext[injection_byte_index] ^ valid_pad_byte
+        print(f"Decrypted byte       : {bytes([decrypted_byte])}")
+
+        next_byte_input = ciphertext[injection_byte_index -
+                                     1] ^ decrypted_byte ^ 2
+        print(next_byte_input)
+
 
 def run_challenges():
-    results = {
-        "S1C1": Set1.challenge_1(),
-        "S1C2": Set1.challenge_2(),
-        "S1C3": Set1.challenge_3(),
-        "S1C4": Set1.challenge_4(),
-        "S1C5": Set1.challenge_5(),
-        "S1C6": Set1.challenge_6(),
-        "S1C7": Set1.challenge_7(),
-        "S1C8": Set1.challenge_8(),
-        "S2C9": Set2.challenge_9(),
-        "S2C10": Set2.challenge_10(),
-        "S2C11": Set2.challenge_11(),
-        "S2C12": Set2.challenge_12(),
-        "S2C13": Set2.challenge_13(),
-        "S2C14": Set2.challenge_14(),
-        "S2C15": Set2.challenge_15(),
-        "S2C16": Set2.challenge_16(),
-        "S3C17": Set3.challenge_17(),
-    }
+    # Set 1
+    Set1.challenge_1()
+    Set1.challenge_2()
+    Set1.challenge_3()
+    Set1.challenge_4()
+    Set1.challenge_5()
+    Set1.challenge_6()
+    Set1.challenge_7()
+    Set1.challenge_8()
 
-    return results
+    # Set 2
+    Set2.challenge_9()
+    Set2.challenge_10()
+    Set2.challenge_11()
+    Set2.challenge_12()
+    Set2.challenge_13()
+    Set2.challenge_14()
+    Set2.challenge_15()
+    Set2.challenge_16()
+
+    # Set 3
+    Set3.challenge_17()
 
 
 def main():
@@ -507,12 +551,10 @@ def main():
     # function_stats('set_1.challenge_4()')
     # print(sys.path)
 
-    results = run_challenges()
+    run_challenges()
 
     executionTime = (time.time() - startTime)
     print(f'\nExecution time in seconds: {executionTime}')
-
-    return results
 
 
 if __name__ == "__main__":

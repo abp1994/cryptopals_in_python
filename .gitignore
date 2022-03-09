@@ -4,5 +4,7 @@ venv2/
 cryptopals.egg-info/
 cryptopals/__pycache__/
 cryptopals/tests/__pycache__/
+cryptopals/tests/integration/__pycache__/
+cryptopals/tests/unit/__pycache__/
 Pipfile
-Pipfile.lock
+Pipfile.locks

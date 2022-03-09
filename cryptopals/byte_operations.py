@@ -10,6 +10,7 @@ def xor(a, b):
     return bytes(a_byte ^ b_byte for a_byte, b_byte in zip(a, b))
 
 
+#Calculate the bitwise Hamming Distance.
 def edit_distance(a, b):
     return sum([bin(byte).count("1") for byte in xor(a, b)])
 
