@@ -2,10 +2,10 @@ import sys
 import time
 from base64 import b64decode, b64encode
 from collections import Counter
-from operator import ne
 from pathlib import Path
 
 sys.path.append(str(Path(__file__).parent.resolve()))
+
 import byte_operations as bo
 import oracles as ocl
 import utils as ut
@@ -494,22 +494,34 @@ class Set3:
         print(f"Revealed data depad  : {bo.depad(oracle.reveal())}")
         print(f"Revealed data length : {len(bo.depad(oracle.reveal()))}")
 
-        # Find the ciphertext byte index that affects the last padding byte when decrypted.
+        # Find the index of the last byte of the last but 1 block (Byte that affects padding byte after encryption).
         injection_byte_index = output_size - block_size - 1
         print(f"Injection byte index : {injection_byte_index}")
 
-        def single_byte_pad_crack(ciphertext, iv, index):
+        expected_pad = 1
+
+        # Function that submits all possible values for specific byte index in a ciphertext and returns byte that oracle is able to depad.
+        def single_byte_pad_crack(ciphertext, iv, index, expected_pad):
             crack_ciphertext = bytearray(ciphertext)
             for byte in range(255):
                 crack_ciphertext[index] = byte
                 if (oracle.depad_possible(crack_ciphertext, iv)):
-                    break
+                    # Check padding is of correct size by flipping a byte that should not affect the pad
+                    # Flip single bit by XORing with 1
+                    check_crack_ciphertext = crack_ciphertext[:]
+                    check_crack_ciphertext[
+                        index - expected_pad] = check_crack_ciphertext[
+                            index - expected_pad] ^ 1
+                    if (oracle.depad_possible(check_crack_ciphertext, iv)):
+                        break
             return byte
 
+        # Find the injected byte that oracle is able to depad.
         valid_pad_byte = single_byte_pad_crack(ciphertext, iv,
-                                               injection_byte_index)
+                                               injection_byte_index, 1)
         print(f"Valid injection byte : {bytes([valid_pad_byte])}")
 
+        # Find the plaintext byte using the valid pad byte.
         decrypted_byte = 1 ^ ciphertext[injection_byte_index] ^ valid_pad_byte
         print(f"Decrypted byte       : {bytes([decrypted_byte])}")
 
@@ -519,7 +531,7 @@ class Set3:
 
 
 def run_challenges():
-    # Set 1
+    # Set 1.
     Set1.challenge_1()
     Set1.challenge_2()
     Set1.challenge_3()
@@ -529,7 +541,7 @@ def run_challenges():
     Set1.challenge_7()
     Set1.challenge_8()
 
-    # Set 2
+    # Set 2.
     Set2.challenge_9()
     Set2.challenge_10()
     Set2.challenge_11()
@@ -539,7 +551,7 @@ def run_challenges():
     Set2.challenge_15()
     Set2.challenge_16()
 
-    # Set 3
+    # Set 3.
     Set3.challenge_17()
 
 
@@ -548,9 +560,9 @@ def main():
     # https://cryptopals.com
     startTime = time.time()
 
-    # profiling stat options
-    # function_stats('set_1.challenge_4()')
-    # print(sys.path)
+    # Profiling stat options.
+    '''# function_stats('set_1.challenge_4()')
+    print(sys.path)'''
 
     run_challenges()
 
