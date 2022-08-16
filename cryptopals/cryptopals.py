@@ -486,14 +486,15 @@ class Set3:
         output_size = len(ciphertext)
         model_size = int(len(ciphertext) / block_size)
 
+        print(f"Ciphertext           : {ciphertext}")
         print(f"Assumed Block Size   : {block_size}")
         print(f"Output size in bytes : {output_size}")
         print(f"Number of Blocks     : {model_size}")
-        print(f"revealed data        : {oracle.reveal()}")
-        print(f"revealed data depad  : {bo.depad(oracle.reveal())}")
-        print(f"Data length          : {len(bo.depad(oracle.reveal()))}")
+        print(f"Revealed data        : {oracle.reveal()}")
+        print(f"Revealed data depad  : {bo.depad(oracle.reveal())}")
+        print(f"Revealed data length : {len(bo.depad(oracle.reveal()))}")
 
-        # Find the last byte
+        # Find the ciphertext byte index that affects the last padding byte when decrypted.
         injection_byte_index = output_size - block_size - 1
         print(f"Injection byte index : {injection_byte_index}")
 
