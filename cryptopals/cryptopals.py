@@ -495,43 +495,121 @@ class Set3:
         print(f"Revealed data length : {len(bo.depad(oracle.reveal()))}")
 
         # Find the index of the last byte of the last but 1 block (Byte that affects padding byte after encryption).
-        injection_byte_index = output_size - block_size - 1
-        print(f"Injection byte index : {injection_byte_index}")
+        '''injection_byte_index = output_size - block_size - 1
+        print(f"Injection byte index : {injection_byte_index}")'''
 
-        expected_pad = 1
+        #decryption = b""
+        #expected_pad = 1
 
         # Function that submits all possible values for specific byte index in a ciphertext and returns byte that oracle is able to depad.
+        # a bit is then flipped and depading is rerun to check that the padding is of a known value.
         def single_byte_pad_crack(ciphertext, iv, index, expected_pad):
             crack_ciphertext = bytearray(ciphertext)
             for byte in range(255):
                 crack_ciphertext[index] = byte
                 if (oracle.depad_possible(crack_ciphertext, iv)):
-                    # Check padding is of correct size by flipping a byte that should not affect the pad
-                    # Flip single bit by XORing with 1
-                    check_crack_ciphertext = crack_ciphertext[:]
-                    check_crack_ciphertext[
-                        index - expected_pad] = check_crack_ciphertext[
-                            index - expected_pad] ^ 1
-                    if (oracle.depad_possible(check_crack_ciphertext, iv)):
+                    # Check padding is of correct size by flipping a bit that should not affect the pad.
+                    # Only required if expected pad is 1.
+                    if expected_pad == 1:
+                        check_crack_ciphertext = crack_ciphertext[:]
+                        # Flip single bit by XORing with 1.
+                        check_crack_ciphertext[
+                            index - expected_pad] = check_crack_ciphertext[
+                                index - expected_pad] ^ 1
+                        # Check depad still possible.
+                        if (oracle.depad_possible(check_crack_ciphertext, iv)):
+                            break
+                    else:
                         break
             return byte
 
-        # Find the injected byte that oracle is able to depad.
+        '''# Find an injected byte that oracle is able to depad (With inferrable padding).
         valid_pad_byte = single_byte_pad_crack(ciphertext, iv,
-                                               injection_byte_index, 1)
+                                               injection_byte_index,
+                                               expected_pad)
         print(f"Valid injection byte : {bytes([valid_pad_byte])}")
 
         # Find the plaintext byte using the valid pad byte.
-        decrypted_byte = 1 ^ ciphertext[injection_byte_index] ^ valid_pad_byte
+        decrypted_byte = expected_pad ^ ciphertext[
+            injection_byte_index] ^ valid_pad_byte
         print(f"Decrypted byte       : {bytes([decrypted_byte])}")
 
+        # Store decrypted bytes.
+        decryption = b"".join([bytes([decrypted_byte]), decryption])
+
+        print(f"Decrypted plaintext  : {decryption}")
+
+        expected_pad = 2
+        modified_ciphertext = ciphertext[:]
+
         next_byte_input = ciphertext[injection_byte_index -
-                                     1] ^ decrypted_byte ^ 2
-        print(next_byte_input)
+                                     1] ^ decrypted_byte ^ expected_pad
+        print(bytes([next_byte_input]))'''
+
+        def padding_oracle_attack(ciphertext, block_size, iv):
+            plaintext = b""
+
+            # Divide ciphertext into blocks.
+            block_array = bo.blockify(ciphertext, block_size)
+            # Prepend the iv to blocks.
+            block_array.insert(0, iv)
+
+            # Create block pairs for processing.
+            block_pairs = [(block_array[i], block_array[i + 1])
+                           for i in (range(len(block_array) - 1))]
+
+            for penultimate_block, end_block in reversed(block_pairs):
+                decryption = b""
+                crack_block = penultimate_block[:]
+                # Crack each byte in the block.
+                for byte_index in reversed(range(block_size)):
+                    expected_pad = block_size - byte_index
+
+                    crack_ciphertext = b"".join([crack_block, end_block])
+
+                    # Find the valid pad byte.
+                    valid_pad_byte = single_byte_pad_crack(
+                        crack_ciphertext, iv, byte_index, expected_pad)
+
+                    # Find the plaintext byte using the valid pad byte.
+                    decrypted_byte = expected_pad ^ penultimate_block[
+                        byte_index] ^ valid_pad_byte
+
+                    # Prepend decrypted byte to decryption.
+                    decryption = b"".join(
+                        [bytes([decrypted_byte]), decryption])
+
+                    # Update crack block by setting all unknown pad bytes to bytes that create expected pad.
+                    for index in range(block_size - 1,
+                                       block_size - expected_pad - 1, -1):
+                        crack_block_prepend = crack_block[:index]
+                        crack_block_append = crack_block[index + 1:]
+                        new_crack_byte = penultimate_block[index] ^ decryption[
+                            -(block_size - index)] ^ expected_pad + 1
+
+                        crack_block = b"".join([
+                            crack_block_prepend,
+                            bytes([new_crack_byte]), crack_block_append
+                        ])
+
+                # Update plaintext by prepending decrypted block.
+                plaintext = b"".join([decryption, plaintext])
+                print(plaintext)
+            # Remove padding from plaintext.
+            print(plaintext)
+            plaintext = bo.depad(plaintext)
+            return plaintext
+
+        plaintext = padding_oracle_attack(ciphertext, block_size, iv)
+        print(f'Plaintext     : {plaintext}')
+        if plaintext == bo.depad(oracle.reveal()):
+            print("---------------Success------------------")
+        else:
+            print("---------------Failure------------------")
 
 
 def run_challenges():
-    # Set 1.
+    '''# Set 1.
     Set1.challenge_1()
     Set1.challenge_2()
     Set1.challenge_3()
@@ -550,7 +628,7 @@ def run_challenges():
     Set2.challenge_14()
     Set2.challenge_15()
     Set2.challenge_16()
-
+'''
     # Set 3.
     Set3.challenge_17()
 

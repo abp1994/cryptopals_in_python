@@ -89,6 +89,13 @@ def depad(data):
     return data[0:-pad_size]
 
 
+def blockify(ciphertext, block_size):
+    return [
+        ciphertext[i:i + block_size]
+        for i in range(0, len(ciphertext), block_size)
+    ]
+
+
 def random_AES_key():
     return secrets.token_bytes(16)
 
