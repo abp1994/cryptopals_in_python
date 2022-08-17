@@ -523,29 +523,6 @@ class Set3:
                         break
             return byte
 
-        '''# Find an injected byte that oracle is able to depad (With inferrable padding).
-        valid_pad_byte = single_byte_pad_crack(ciphertext, iv,
-                                               injection_byte_index,
-                                               expected_pad)
-        print(f"Valid injection byte : {bytes([valid_pad_byte])}")
-
-        # Find the plaintext byte using the valid pad byte.
-        decrypted_byte = expected_pad ^ ciphertext[
-            injection_byte_index] ^ valid_pad_byte
-        print(f"Decrypted byte       : {bytes([decrypted_byte])}")
-
-        # Store decrypted bytes.
-        decryption = b"".join([bytes([decrypted_byte]), decryption])
-
-        print(f"Decrypted plaintext  : {decryption}")
-
-        expected_pad = 2
-        modified_ciphertext = ciphertext[:]
-
-        next_byte_input = ciphertext[injection_byte_index -
-                                     1] ^ decrypted_byte ^ expected_pad
-        print(bytes([next_byte_input]))'''
-
         def padding_oracle_attack(ciphertext, block_size, iv):
             plaintext = b""
 
@@ -579,7 +556,7 @@ class Set3:
                     decryption = b"".join(
                         [bytes([decrypted_byte]), decryption])
 
-                    # Update crack block by setting all unknown pad bytes to bytes that create expected pad.
+                    # Update crack block by setting all unknown pad bytes to bytes that create expected pad when decrypted.
                     for index in range(block_size - 1,
                                        block_size - expected_pad - 1, -1):
                         crack_block_prepend = crack_block[:index]
@@ -605,7 +582,7 @@ class Set3:
         if plaintext == bo.depad(oracle.reveal()):
             print("---------------Success------------------")
         else:
-            print("---------------Failure------------------")
+            print("XXXXXXXXXXXXXXXXFailureXXXXXXXXXXXXXXXX")
 
 
 def run_challenges():
