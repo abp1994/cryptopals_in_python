@@ -1,3 +1,7 @@
+import os
+import random
+import secrets
+import string
 import sys
 import time
 from base64 import b64decode, b64encode
@@ -148,13 +152,13 @@ class Set1:
 
         hex_ciphertext = ut.import_data("data_S1C8.txt")
 
-        def text_breaker():
+        def text_breaker(hex_ciphertext):
             for line_index, line in enumerate(hex_ciphertext.splitlines()):
                 data = bytes.fromhex(line)
                 unique_char_instances = len(list(Counter(data).items()))
                 yield unique_char_instances, line_index
 
-        unique_char_instances, line_index = min(text_breaker())
+        unique_char_instances, line_index = min(text_breaker(hex_ciphertext))
         print(
             f"Assume ECB 1:1 mapping has low diversity of characters compared"
             " to random data")
@@ -169,6 +173,44 @@ class Set1:
 
         print(f"Find line with duplicate blocks")
         print(f"Corresponding line            : {line_index2}")
+
+        # Test of first method
+        class ECB_TEST_ORACLE:
+            def __init__(self):
+                self.mode = "ECB"
+                self.key = bo.random_AES_key()
+                self.iv = secrets.token_bytes(16)
+
+            def encrypt(self, n):
+                data = ''.join(
+                    random.choices(string.ascii_letters + string.digits, k=n))
+                data = encode(data)
+                data_padded = bo.pad(16, data)
+                result = ocl.AESECB(self.key).encrypt(data_padded)
+                return result
+
+        min_l = 1
+        max_l = 300
+        no_spoofs = 1
+        no_of_tests = 100000
+
+        s_count = 0
+        for l in range(no_of_tests):
+            length = random.randint(min_l, max_l)
+            #create random data array
+            data = [
+                os.urandom(random.randint(min_l, max_l)).hex()
+                for i in range(no_spoofs)
+            ]
+            encrypted_data = ECB_TEST_ORACLE().encrypt(length).hex()
+            data.insert(0, encrypted_data)
+            datastr = '\n'.join(data)
+            unique_char_instances, line_index = min(text_breaker(datastr))
+            if line_index == 0:
+                s_count += 1
+        print(f"Total number of tests : {no_of_tests}")
+        print(f"Number of successes : {s_count}")
+        print(f"Success percentage : {s_count/no_of_tests}")
 
 
 class Set2:
@@ -593,9 +635,11 @@ def run_challenges():
     Set1.challenge_4()
     Set1.challenge_5()
     Set1.challenge_6()
-    Set1.challenge_7()
+    Set1.challenge_7()'''
     Set1.challenge_8()
 
+
+'''
     # Set 2.
     Set2.challenge_9()
     Set2.challenge_10()
@@ -605,9 +649,9 @@ def run_challenges():
     Set2.challenge_14()
     Set2.challenge_15()
     Set2.challenge_16()
-'''
+
     # Set 3.
-    Set3.challenge_17()
+    Set3.challenge_17()'''
 
 
 def main():
