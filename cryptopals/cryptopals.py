@@ -58,6 +58,7 @@ class Set1:
         print(f"Highest frequency analysis score : {score}")
         print(f"Corresponding Key                : {decode(byte)}")
         print(f"Decrypted plaintext              : {decode(plaintext)}")
+        return decode(plaintext)
 
     @staticmethod
     def challenge_4():
@@ -80,6 +81,7 @@ class Set1:
         print(f"Corresponding line               : {line_index}")
         print(f"Corresponding key                : {decode(byte)}")
         print(f"Decrypted plaintext              : {decode(plaintext)}")
+        return decode(plaintext)
 
     @staticmethod
     def challenge_5():
@@ -126,6 +128,7 @@ class Set1:
         print(f"Highest score         : {score}")
         print(f"Corresponding Key     : {decode(key)}")
         print(f"Secret                : \n{decode(secret[:90])}...")
+        return decode(secret)
 
     @staticmethod
     def challenge_7():
@@ -149,6 +152,7 @@ class Set1:
                 break
 
         print(f"Line with duplicate blocks : {line_index}")
+        return line_index
 
 
 class Set2:
@@ -156,55 +160,60 @@ class Set2:
     def challenge_9():
         print(f"\n-- Challenge 9 - Implement PKCS#7 padding --")
 
-        data = encode("YELLOW SUBMARINE")
+        plaintext = encode("YELLOW SUBMARINE")
         size = 20
-        print(f"{data} padded to {size} bytes using PKCS#7 : "
-              f"{bo.pad(size, data)}")
-        return bo.pad(size, data)
+        plaintext_padded = bo.pad(size, plaintext)
+
+        print(f"{plaintext} padded to {size} bytes using PKCS#7 : "
+              f"{plaintext_padded}")
+        return plaintext_padded
 
     @staticmethod
     def challenge_10():
         print(f"\n-- Challenge 10 - Implement CBC mode --")
 
-        data_p = bo.pad(16, b"This is a secret message! TOP SECRET")
+        plaintext_padded = bo.pad(16, b"This is a secret message! TOP SECRET")
         key = b"PASSWORDPASSWORD"
         iv = b"1122334455667788"
 
         ECB_1 = ocl.AESECB(key)
         CBC_1 = ocl.AESCBC(iv, key)
 
-        ECB_ciphertext = ECB_1.encrypt(data_p)
-        ECB_plaintext = bo.depad(ECB_1.decrypt(ECB_ciphertext))
-        CBC_ciphertext = CBC_1.encrypt(data_p)
-        CBC_plaintext = bo.depad(CBC_1.decrypt(CBC_ciphertext))
+        ciphertext_ecb = ECB_1.encrypt(plaintext_padded)
+        plaintext_ecb = bo.depad(ECB_1.decrypt(ciphertext_ecb))
+        ciphertext_cbc = CBC_1.encrypt(plaintext_padded)
+        plaintext_cbc = bo.depad(CBC_1.decrypt(ciphertext_cbc))
 
-        print(f"Padded Secret Message : {data_p}")
+        print(f"Padded Secret Message : {plaintext_padded}")
         print(f"Key                   : {key}")
-        print(f"ECB encrypted message : {ECB_ciphertext}")
-        print(f"ECB decrypted message : {ECB_plaintext}")
+        print(f"ECB encrypted message : {ciphertext_ecb}")
+        print(f"ECB decrypted message : {plaintext_ecb}")
         print(f"iv                    : {iv}")
-        print(f"CBC encrypted message : {CBC_ciphertext}")
-        print(f"CBC decrypted message : {CBC_plaintext}")
+        print(f"CBC encrypted message : {ciphertext_cbc}")
+        print(f"CBC decrypted message : {plaintext_cbc}")
         print("----- Part 2 ------")
 
-        data = b64decode(ut.import_data("data_S2C10.txt"))
+        ciphertext = b64decode(ut.import_data("data_S2C10.txt"))
         key = b"YELLOW SUBMARINE"
         iv = bytes([0]) * 16
         CBC_2 = ocl.AESCBC(iv, key)
-        decrypted = decode(bo.depad(CBC_2.decrypt(data)))
-        print(f"CBC decrypted message : \n{decrypted[0:90]}...")
+        plaintext = bo.depad(CBC_2.decrypt(ciphertext))
+        print(f"CBC decrypted message : \n{decode(plaintext[0:90])}...")
+        return decode(plaintext)
 
     @staticmethod
     def challenge_11():
         print(f"\n-- Challenge 11 - An ECB/CBC detection oracle --")
 
         # Create and profile 5 oracles.
-        oracles = [ocl.C11() for i in range(5)]
+        oracles = [ocl.C11() for _ in range(5)]
+        oracle_modes = [oracle.mode for oracle in oracles]
         detected_modes = [ocl.Profiler(oracle).mode for oracle in oracles]
 
         print(f"Random AES key : {bo.random_AES_key()}")
-        print(f"Oracle modes   : {[oracle.mode for oracle in oracles]}")
+        print(f"Oracle modes   : {oracle_modes}")
         print(f"Detected modes : {detected_modes}")
+        return oracle_modes, detected_modes
 
     @staticmethod
     def challenge_12():
@@ -246,8 +255,9 @@ class Set2:
                             byte)[block_start_byte_index:block_end_byte_index]:
                         decryption = b"".join([decryption, byte])
                         break
-
-        print(f"Decoded message : \n{decode(bo.depad(decryption))}")
+        plaintext = bo.depad(decryption)
+        print(f"Decoded message : \n{decode(plaintext)}")
+        return decode(plaintext)
 
     @staticmethod
     def challenge_13():
@@ -278,6 +288,7 @@ class Set2:
         # Create an email that creates a whole new block in output.
         end_align_email = base_email
         end_align_encryption = base_encryption
+
         while len(end_align_encryption) == base_encryption_len:
             end_align_email = "a" + end_align_email
             end_align_encryption = ocl.profile_create(end_align_email)
@@ -294,7 +305,7 @@ class Set2:
         crop = ocl.profile_create(crop_email)[0:48]
         decryption = ocl.profile_decrypt(crop)
 
-        print(f"bytes to push into new block : {bytes_to_remove}")
+        print(f"Bytes to push into new block : {bytes_to_remove}")
         print(f"Crop aligning email          : {crop_email}")
         print(f"Encrypted profile crop       : {crop}")
         print(f"Crop size                    : {len(crop)}")
@@ -400,7 +411,9 @@ class Set2:
                         decryption = b"".join([decryption, byte])
                         break
 
-        print(f"Decoded message : \n{decode(bo.depad(decryption))}")
+        plaintext = bo.depad(decryption)
+        print(f"Decoded message : \n{decode(plaintext)}")
+        return decode(plaintext)
 
     @staticmethod
     def challenge_15():
@@ -437,6 +450,7 @@ class Set2:
         crack_input = b",admin-true"
         ciphertext = oracle.encrypt(crack_input)
 
+        # Bit flip desired characters at desired index.
         bit_flipped_ciphertext_1 = bo.CBC_bit_flipper(known_prefix,
                                                       crack_input, ciphertext,
                                                       profile.block_size, 0,
@@ -451,6 +465,7 @@ class Set2:
         print(
             f"Admin property present : {oracle.check_admin(bit_flipped_ciphertext_2)}"
         )
+        return oracle.check_admin(bit_flipped_ciphertext_2)
 
 
 class Set3:
@@ -485,9 +500,12 @@ class Set3:
         # a bit is then flipped and depading is rerun to check that the padding is of a known value.
         def single_byte_pad_crack(ciphertext, iv, index, expected_pad):
             crack_ciphertext = bytearray(ciphertext)
+
             for byte in range(255):
                 crack_ciphertext[index] = byte
+
                 if (oracle.depad_possible(crack_ciphertext, iv)):
+
                     # Check padding is of correct size by flipping a bit that should not affect the pad.
                     # Only required if expected pad is 1.
                     if expected_pad == 1:
@@ -508,6 +526,7 @@ class Set3:
 
             # Divide ciphertext into blocks.
             block_array = bo.blockify(ciphertext, block_size)
+
             # Prepend the iv to blocks.
             block_array.insert(0, iv)
 
@@ -539,14 +558,14 @@ class Set3:
                     # Update crack block by setting all unknown pad bytes to bytes that create expected pad when decrypted.
                     for index in range(block_size - 1,
                                        block_size - expected_pad - 1, -1):
-                        crack_block_prepend = crack_block[:index]
-                        crack_block_append = crack_block[index + 1:]
+                        crack_block_prefix = crack_block[:index]
+                        crack_block_suffix = crack_block[index + 1:]
                         new_crack_byte = penultimate_block[index] ^ decryption[
                             -(block_size - index)] ^ expected_pad + 1
 
                         crack_block = b"".join([
-                            crack_block_prepend,
-                            bytes([new_crack_byte]), crack_block_append
+                            crack_block_prefix,
+                            bytes([new_crack_byte]), crack_block_suffix
                         ])
 
                 # Update plaintext by prepending decrypted block.

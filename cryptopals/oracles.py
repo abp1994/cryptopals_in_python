@@ -79,8 +79,8 @@ class C12:
         self.key = bo.random_AES_key()
         self.secret = b64decode(ut.import_data("data_S2C12.txt"))
 
-    def encrypt(self, prepend):
-        data = bo.pad(16, prepend + self.secret)
+    def encrypt(self, prefix):
+        data = bo.pad(16, prefix + self.secret)
         return AESECB(self.key).encrypt(data)
 
 
