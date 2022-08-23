@@ -4,7 +4,7 @@ Cryptopals.py is a Python script that works its way through the [Cryptopals](htt
 
 ## Usage
 
-Install the cryptopals package and run 'run_cryptopals' from the CL. Alternately after installation of all dependencies run the cryptopals.py script in the cryptopals directory.
+Install all dependencies from the Pipfile then run the cryptopals.py script in the cryptopals directory.
 
 ## License
 
