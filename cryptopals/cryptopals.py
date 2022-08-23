@@ -255,8 +255,9 @@ class Set2:
                             byte)[block_start_byte_index:block_end_byte_index]:
                         decryption = b"".join([decryption, byte])
                         break
-
-        print(f"Decoded message : \n{decode(bo.depad(decryption))}")
+        plaintext = bo.depad(decryption)
+        print(f"Decoded message : \n{decode(plaintext)}")
+        return decode(plaintext)
 
     @staticmethod
     def challenge_13():
