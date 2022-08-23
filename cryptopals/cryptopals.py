@@ -58,6 +58,7 @@ class Set1:
         print(f"Highest frequency analysis score : {score}")
         print(f"Corresponding Key                : {decode(byte)}")
         print(f"Decrypted plaintext              : {decode(plaintext)}")
+        return decode(plaintext)
 
     @staticmethod
     def challenge_4():
@@ -80,6 +81,7 @@ class Set1:
         print(f"Corresponding line               : {line_index}")
         print(f"Corresponding key                : {decode(byte)}")
         print(f"Decrypted plaintext              : {decode(plaintext)}")
+        return decode(plaintext)
 
     @staticmethod
     def challenge_5():
@@ -126,6 +128,7 @@ class Set1:
         print(f"Highest score         : {score}")
         print(f"Corresponding Key     : {decode(key)}")
         print(f"Secret                : \n{decode(secret[:90])}...")
+        return decode(secret)
 
     @staticmethod
     def challenge_7():
@@ -149,6 +152,7 @@ class Set1:
                 break
 
         print(f"Line with duplicate blocks : {line_index}")
+        return line_index
 
 
 class Set2:
@@ -156,42 +160,44 @@ class Set2:
     def challenge_9():
         print(f"\n-- Challenge 9 - Implement PKCS#7 padding --")
 
-        data = encode("YELLOW SUBMARINE")
+        plaintext = encode("YELLOW SUBMARINE")
         size = 20
-        print(f"{data} padded to {size} bytes using PKCS#7 : "
-              f"{bo.pad(size, data)}")
-        return bo.pad(size, data)
+        plaintext_padded = bo.pad(size, plaintext)
+
+        print(f"{plaintext} padded to {size} bytes using PKCS#7 : "
+              f"{plaintext_padded}")
+        return plaintext_padded
 
     @staticmethod
     def challenge_10():
         print(f"\n-- Challenge 10 - Implement CBC mode --")
 
-        data_p = bo.pad(16, b"This is a secret message! TOP SECRET")
+        plaintext_padded = bo.pad(16, b"This is a secret message! TOP SECRET")
         key = b"PASSWORDPASSWORD"
         iv = b"1122334455667788"
 
         ECB_1 = ocl.AESECB(key)
         CBC_1 = ocl.AESCBC(iv, key)
 
-        ECB_ciphertext = ECB_1.encrypt(data_p)
-        ECB_plaintext = bo.depad(ECB_1.decrypt(ECB_ciphertext))
-        CBC_ciphertext = CBC_1.encrypt(data_p)
-        CBC_plaintext = bo.depad(CBC_1.decrypt(CBC_ciphertext))
+        ciphertext_ecb = ECB_1.encrypt(plaintext_padded)
+        plaintext_ecb = bo.depad(ECB_1.decrypt(ciphertext_ecb))
+        ciphertext_cbc = CBC_1.encrypt(plaintext_padded)
+        plaintext_cbc = bo.depad(CBC_1.decrypt(ciphertext_cbc))
 
-        print(f"Padded Secret Message : {data_p}")
+        print(f"Padded Secret Message : {plaintext_padded}")
         print(f"Key                   : {key}")
-        print(f"ECB encrypted message : {ECB_ciphertext}")
-        print(f"ECB decrypted message : {ECB_plaintext}")
+        print(f"ECB encrypted message : {ciphertext_ecb}")
+        print(f"ECB decrypted message : {plaintext_ecb}")
         print(f"iv                    : {iv}")
-        print(f"CBC encrypted message : {CBC_ciphertext}")
-        print(f"CBC decrypted message : {CBC_plaintext}")
+        print(f"CBC encrypted message : {ciphertext_cbc}")
+        print(f"CBC decrypted message : {plaintext_cbc}")
         print("----- Part 2 ------")
 
-        data = b64decode(ut.import_data("data_S2C10.txt"))
+        ciphertext = b64decode(ut.import_data("data_S2C10.txt"))
         key = b"YELLOW SUBMARINE"
         iv = bytes([0]) * 16
         CBC_2 = ocl.AESCBC(iv, key)
-        decrypted = decode(bo.depad(CBC_2.decrypt(data)))
+        decrypted = decode(bo.depad(CBC_2.decrypt(ciphertext)))
         print(f"CBC decrypted message : \n{decrypted[0:90]}...")
 
     @staticmethod
