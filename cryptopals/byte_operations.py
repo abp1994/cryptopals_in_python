@@ -230,7 +230,7 @@ class text_scorer:
         # Normalise letter instances.
         total = sum(case_independent_letter_instances)
         case_independent_letter_frequencies = [
-            a / total for a in case_independent_letter_instances
+            instance / total for instance in case_independent_letter_instances
         ]
 
         # Return goodness of fit.
