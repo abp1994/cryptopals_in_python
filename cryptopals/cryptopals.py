@@ -16,46 +16,45 @@ class Set1:
     def challenge_1():
         print("\n-- Challenge 1 - Convert hex to base 64 --")
 
-        hex_ciphertext = (
+        plaintext_hex = (
             "49276d206b696c6c696e6720796f757220627261696e206c696b65"
             "206120706f69736f6e6f7573206d757368726f6f6d")
-        data = bytes.fromhex(hex_ciphertext)
-        B64_encode = b64encode(data)
+        plaintext = bytes.fromhex(plaintext_hex)
+        plaintext_b64 = b64encode(plaintext)
 
-        print(f"Hex ciphertext : {hex_ciphertext}")
-        print(f"Plaintext      : {decode(data)}")
-        print(f"Base 64 encode : {decode(B64_encode)}")
-        return B64_encode
+        print(f"Hex plaintext  : {plaintext_hex}")
+        print(f"Plaintext      : {decode(plaintext)}")
+        print(f"Base 64 encode : {decode(plaintext_b64)}")
+        return plaintext_b64
 
     @staticmethod
     def challenge_2():
         # Take two equal-size buffers and produce their XOR combination.
         print("\n-- Challenge 2 - Fixed XOR --")
 
-        hex_ciphertext = "1c0111001f010100061a024b53535009181c"
-        hex_key = "686974207468652062756c6c277320657965"
-        data = bytes.fromhex(hex_ciphertext)
-        key = bytes.fromhex(hex_key)
-        decrypted_data = bo.xor(data, key)
+        ciphertext_hex = "1c0111001f010100061a024b53535009181c"
+        key_hex = "686974207468652062756c6c277320657965"
+        ciphertext, key = map(bytes.fromhex, [ciphertext_hex, key_hex])
+        plaintext = bo.xor(ciphertext, key)
 
-        print(f"Hex ciphertext          : {hex_ciphertext}")
-        print(f"Hex key                 : {hex_key}")
-        print(f"XOR decrypted plaintext : {decode(decrypted_data)}")
-        print(f"Hex encode              : {decrypted_data.hex()}")
-        return decrypted_data.hex()
+        print(f"Hex ciphertext          : {ciphertext_hex}")
+        print(f"Hex key                 : {key_hex}")
+        print(f"XOR decrypted plaintext : {decode(plaintext)}")
+        print(f"Hex encode              : {plaintext.hex()}")
+        return plaintext.hex()
 
     @staticmethod
     def challenge_3():
         print("\n-- Challenge 3 - Single-byte XOR cipher --")
 
-        hex_ciphertext = (
+        ciphertext_hex = (
             "1b37373331363f78151b7f2b783431333d78397828372d363c7837"
             "3e783a393b3736")
-        data = bytes.fromhex(hex_ciphertext)
-        score, byte = bo.single_byte_xor_breaker(data)
-        plaintext = bo.single_byte_xor(byte, data)
+        ciphertext = bytes.fromhex(ciphertext_hex)
+        score, byte = bo.crack_single_byte_xor(ciphertext)
+        plaintext = bo.single_byte_xor(byte, ciphertext)
 
-        print(f"Hex ciphertext                   : {hex_ciphertext}")
+        print(f"Hex ciphertext                   : {ciphertext_hex}")
         print(f"Highest frequency analysis score : {score}")
         print(f"Corresponding Key                : {decode(byte)}")
         print(f"Decrypted plaintext              : {decode(plaintext)}")
@@ -65,15 +64,15 @@ class Set1:
         print("\n-- Challenge 4 - Detect single-char XOR --")
 
         file_name = "data_S1C4.txt"
-        hex_ciphertext = ut.import_data(file_name)
+        ciphertext_hex = ut.import_data(file_name)
 
-        def text_breaker():
-            for line_index, line in enumerate(hex_ciphertext.splitlines()):
+        def crack_text():
+            for line_index, line in enumerate(ciphertext_hex.splitlines()):
                 data = bytes.fromhex(line)
-                score, byte = bo.single_byte_xor_breaker(data)
+                score, byte = bo.crack_single_byte_xor(data)
                 yield score, byte, line_index, data
 
-        score, byte, line_index, data = max(text_breaker())
+        score, byte, line_index, data = max(crack_text())
         plaintext = bo.single_byte_xor(byte, data)
 
         print(f"Hex data file                    : {file_name}")
@@ -86,14 +85,13 @@ class Set1:
     def challenge_5():
         print("\n-- Challenge 5 - Implement repeating-key XOR --")
 
-        stanza = ("Burning 'em, if you ain't quick and nimble\n"
-                  "I go crazy when I hear a cymbal")
+        plaintext = encode("Burning 'em, if you ain't quick and nimble\n"
+                           "I go crazy when I hear a cymbal")
         key = encode("ICE")
-        data = encode(stanza)
-        ciphertext = bo.repeating_key_xor(data, key)
+        ciphertext = bo.repeating_key_xor(plaintext, key)
 
         print(f"Key                                : {key}")
-        print(f"Plaintext                          : \n{stanza}")
+        print(f"Plaintext                          : \n{decode(plaintext)}")
         print(f"Repeating key encrypt (hex encode) : {ciphertext.hex()}")
         return (ciphertext.hex())
 

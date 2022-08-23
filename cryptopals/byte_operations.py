@@ -19,7 +19,7 @@ def single_byte_xor(byte, byte_array):
     return xor(byte_array, byte * len(byte_array))
 
 
-def single_byte_xor_breaker(ciphertext):
+def crack_single_byte_xor(ciphertext):
     def attempt_crack():
         for char in range(256):
             byte = bytes([char])
@@ -68,7 +68,7 @@ def key_finder(key_size, data):
     output_list = [bytes(row.tolist()) for row in data_array.T]
 
     # Return most promising key of key_size size.
-    return b"".join([single_byte_xor_breaker(item)[1] for item in output_list])
+    return b"".join([crack_single_byte_xor(item)[1] for item in output_list])
 
 
 def pad(block_size, data):
