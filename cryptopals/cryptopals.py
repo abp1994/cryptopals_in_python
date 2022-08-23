@@ -539,14 +539,14 @@ class Set3:
                     # Update crack block by setting all unknown pad bytes to bytes that create expected pad when decrypted.
                     for index in range(block_size - 1,
                                        block_size - expected_pad - 1, -1):
-                        crack_block_prepend = crack_block[:index]
-                        crack_block_append = crack_block[index + 1:]
+                        crack_block_prefix = crack_block[:index]
+                        crack_block_suffix = crack_block[index + 1:]
                         new_crack_byte = penultimate_block[index] ^ decryption[
                             -(block_size - index)] ^ expected_pad + 1
 
                         crack_block = b"".join([
-                            crack_block_prepend,
-                            bytes([new_crack_byte]), crack_block_append
+                            crack_block_prefix,
+                            bytes([new_crack_byte]), crack_block_suffix
                         ])
 
                 # Update plaintext by prepending decrypted block.
