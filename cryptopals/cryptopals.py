@@ -29,7 +29,6 @@ class Set1:
 
     @staticmethod
     def challenge_2():
-        # Take two equal-size buffers and produce their XOR combination.
         print("\n-- Challenge 2 - Fixed XOR --")
 
         ciphertext_hex = "1c0111001f010100061a024b53535009181c"
