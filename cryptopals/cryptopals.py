@@ -288,6 +288,7 @@ class Set2:
         # Create an email that creates a whole new block in output.
         end_align_email = base_email
         end_align_encryption = base_encryption
+
         while len(end_align_encryption) == base_encryption_len:
             end_align_email = "a" + end_align_email
             end_align_encryption = ocl.profile_create(end_align_email)
@@ -304,7 +305,7 @@ class Set2:
         crop = ocl.profile_create(crop_email)[0:48]
         decryption = ocl.profile_decrypt(crop)
 
-        print(f"bytes to push into new block : {bytes_to_remove}")
+        print(f"Bytes to push into new block : {bytes_to_remove}")
         print(f"Crop aligning email          : {crop_email}")
         print(f"Encrypted profile crop       : {crop}")
         print(f"Crop size                    : {len(crop)}")
@@ -410,7 +411,9 @@ class Set2:
                         decryption = b"".join([decryption, byte])
                         break
 
-        print(f"Decoded message : \n{decode(bo.depad(decryption))}")
+        plaintext = bo.depad(decryption)
+        print(f"Decoded message : \n{decode(plaintext)}")
+        return decode(plaintext)
 
     @staticmethod
     def challenge_15():
@@ -447,6 +450,7 @@ class Set2:
         crack_input = b",admin-true"
         ciphertext = oracle.encrypt(crack_input)
 
+        # Bit flip desired characters at desired index.
         bit_flipped_ciphertext_1 = bo.CBC_bit_flipper(known_prefix,
                                                       crack_input, ciphertext,
                                                       profile.block_size, 0,
@@ -461,6 +465,7 @@ class Set2:
         print(
             f"Admin property present : {oracle.check_admin(bit_flipped_ciphertext_2)}"
         )
+        return oracle.check_admin(bit_flipped_ciphertext_2)
 
 
 class Set3:
@@ -495,9 +500,12 @@ class Set3:
         # a bit is then flipped and depading is rerun to check that the padding is of a known value.
         def single_byte_pad_crack(ciphertext, iv, index, expected_pad):
             crack_ciphertext = bytearray(ciphertext)
+
             for byte in range(255):
                 crack_ciphertext[index] = byte
+
                 if (oracle.depad_possible(crack_ciphertext, iv)):
+
                     # Check padding is of correct size by flipping a bit that should not affect the pad.
                     # Only required if expected pad is 1.
                     if expected_pad == 1:
@@ -518,6 +526,7 @@ class Set3:
 
             # Divide ciphertext into blocks.
             block_array = bo.blockify(ciphertext, block_size)
+
             # Prepend the iv to blocks.
             block_array.insert(0, iv)
 

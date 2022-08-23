@@ -7,12 +7,12 @@ from pathlib import Path
 import utils as ut
 
 
-def blockPrint():
-    sys.stdout = open(os.devnull, 'w')
-
-
-def enablePrint():
+def enable_print():
     sys.stdout = sys.__stdout__
+
+
+def disable_print():
+    sys.stdout = open(os.devnull, 'w')
 
 
 def import_data(file_name):
@@ -31,8 +31,8 @@ def decode(byte_array):
 
 def function_stats(function):
     profile = cProfile.Profile()
-    ut.blockPrint()
+    ut.disable_print()
     profile.run(function)
-    ut.enablePrint()
+    ut.enable_print()
     ps = pstats.Stats(profile)
     ps.print_stats()
