@@ -100,7 +100,7 @@ def random_AES_key():
     return secrets.token_bytes(16)
 
 
-def ECB_mode_check(data):
+def is_ecb_encrypted(data):
     array = np.frombuffer(data, dtype="uint8").reshape(-1, 16)
     duplicate_blocks = len(array) - len(np.unique(array, axis=0))
     return True if 0 < duplicate_blocks else False

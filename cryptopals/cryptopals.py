@@ -90,7 +90,7 @@ class Set1:
         key = encode("ICE")
         ciphertext = bo.repeating_key_xor(plaintext, key)
 
-        print(f"Key                                : {key}")
+        print(f"Key                                : {decode(key)}")
         print(f"Plaintext                          : \n{decode(plaintext)}")
         print(f"Repeating key encrypt (hex encode) : {ciphertext.hex()}")
         return (ciphertext.hex())
@@ -108,15 +108,15 @@ class Set1:
         print(f"Edit distance : {bo.edit_distance(data_1, data_2)}")
         print(f"-- Part 2 --")
 
-        B64_ciphertext = ut.import_data("data_S1C6.txt")
-        data = b64decode(B64_ciphertext)
-        likely_key_sizes = bo.find_key_size(40, data)
+        ciphertext_b64 = ut.import_data("data_S1C6.txt")
+        ciphertext = b64decode(ciphertext_b64)
+        likely_key_sizes = bo.find_key_size(40, ciphertext)
 
         # Find most likely key.
         def key_comparison():
             for key_size in likely_key_sizes[0:3]:
-                key = bo.key_finder(key_size, data)
-                secret = bo.repeating_key_xor(data, key)
+                key = bo.key_finder(key_size, ciphertext)
+                secret = bo.repeating_key_xor(ciphertext, key)
                 score = bo.text_scorer(secret).score()
                 yield score, key, secret
 
@@ -132,20 +132,20 @@ class Set1:
         print(f"\n-- Challenge 7 - AES in ECB mode --")
 
         key = encode("YELLOW SUBMARINE")
-        data = b64decode(ut.import_data("data_S1C7.txt"))
-        plaintext = ocl.AESECB(key).decrypt(data)
+        ciphertext = b64decode(ut.import_data("data_S1C7.txt"))
+        plaintext = ocl.AESECB(key).decrypt(ciphertext)
 
-        print(f"Key    : {decode(key)}")
-        print(f"Secret : \n{decode(plaintext[:90])}...")
+        print(f"Key       : {decode(key)}")
+        print(f"Plaintext : \n{decode(plaintext[:90])}...")
 
     @staticmethod
     def challenge_8():
         print(f"\n-- Challenge 8 - Detect AES in ECB mode --")
 
-        hex_ciphertext = ut.import_data("data_S1C8.txt")
+        ciphertext_hex = ut.import_data("data_S1C8.txt")
         # Find if data contains duplicate blocks.
-        for line_index, line in enumerate(hex_ciphertext.splitlines()):
-            if bo.ECB_mode_check(bytes.fromhex(line)):
+        for line_index, line in enumerate(ciphertext_hex.splitlines()):
+            if bo.is_ecb_encrypted(bytes.fromhex(line)):
                 break
 
         print(f"Line with duplicate blocks : {line_index}")
@@ -303,14 +303,14 @@ class Set2:
         # Create an email that shows its position in the encryption.
         position_email = base_email
         # Look for two identical blocks in encryption.
-        while not bo.ECB_mode_check(ocl.profile_create(position_email)):
+        while not bo.is_ecb_encrypted(ocl.profile_create(position_email)):
             position_email = "c" + position_email
 
         print(f"Position finding email       : {position_email}")
 
         # Find position at which duplicated block starts changing.
         position = 0
-        while bo.ECB_mode_check(ocl.profile_create(position_email)):
+        while bo.is_ecb_encrypted(ocl.profile_create(position_email)):
             position_email_list = list(position_email)
             position_email_list[position] = "d"
             position_email = "".join(position_email_list)
