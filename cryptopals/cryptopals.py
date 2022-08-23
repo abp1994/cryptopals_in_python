@@ -1,11 +1,10 @@
 import sys
 import time
 from base64 import b64decode, b64encode
-from collections import Counter
-from operator import ne
 from pathlib import Path
 
 sys.path.append(str(Path(__file__).parent.resolve()))
+
 import byte_operations as bo
 import oracles as ocl
 import utils as ut
@@ -17,46 +16,45 @@ class Set1:
     def challenge_1():
         print("\n-- Challenge 1 - Convert hex to base 64 --")
 
-        hex_ciphertext = (
+        plaintext_hex = (
             "49276d206b696c6c696e6720796f757220627261696e206c696b65"
             "206120706f69736f6e6f7573206d757368726f6f6d")
-        data = bytes.fromhex(hex_ciphertext)
-        B64_encode = b64encode(data)
+        plaintext = bytes.fromhex(plaintext_hex)
+        plaintext_b64 = b64encode(plaintext)
 
-        print(f"Hex ciphertext : {hex_ciphertext}")
-        print(f"Plaintext      : {decode(data)}")
-        print(f"Base 64 encode : {decode(B64_encode)}")
-        return B64_encode
+        print(f"Hex plaintext  : {plaintext_hex}")
+        print(f"Plaintext      : {decode(plaintext)}")
+        print(f"Base 64 encode : {decode(plaintext_b64)}")
+        return plaintext_b64
 
     @staticmethod
     def challenge_2():
         # Take two equal-size buffers and produce their XOR combination.
         print("\n-- Challenge 2 - Fixed XOR --")
 
-        hex_ciphertext = "1c0111001f010100061a024b53535009181c"
-        hex_key = "686974207468652062756c6c277320657965"
-        data = bytes.fromhex(hex_ciphertext)
-        key = bytes.fromhex(hex_key)
-        decrypted_data = bo.xor(data, key)
+        ciphertext_hex = "1c0111001f010100061a024b53535009181c"
+        key_hex = "686974207468652062756c6c277320657965"
+        ciphertext, key = map(bytes.fromhex, [ciphertext_hex, key_hex])
+        plaintext = bo.xor(ciphertext, key)
 
-        print(f"Hex ciphertext          : {hex_ciphertext}")
-        print(f"Hex key                 : {hex_key}")
-        print(f"XOR decrypted plaintext : {decode(decrypted_data)}")
-        print(f"Hex encode              : {decrypted_data.hex()}")
-        return decrypted_data.hex()
+        print(f"Hex ciphertext          : {ciphertext_hex}")
+        print(f"Hex key                 : {key_hex}")
+        print(f"XOR decrypted plaintext : {decode(plaintext)}")
+        print(f"Hex encode              : {plaintext.hex()}")
+        return plaintext.hex()
 
     @staticmethod
     def challenge_3():
         print("\n-- Challenge 3 - Single-byte XOR cipher --")
 
-        hex_ciphertext = (
+        ciphertext_hex = (
             "1b37373331363f78151b7f2b783431333d78397828372d363c7837"
             "3e783a393b3736")
-        data = bytes.fromhex(hex_ciphertext)
-        score, byte = bo.single_byte_xor_breaker(data)
-        plaintext = bo.single_byte_xor(byte, data)
+        ciphertext = bytes.fromhex(ciphertext_hex)
+        score, byte = bo.crack_single_byte_xor(ciphertext)
+        plaintext = bo.single_byte_xor(byte, ciphertext)
 
-        print(f"Hex ciphertext                   : {hex_ciphertext}")
+        print(f"Hex ciphertext                   : {ciphertext_hex}")
         print(f"Highest frequency analysis score : {score}")
         print(f"Corresponding Key                : {decode(byte)}")
         print(f"Decrypted plaintext              : {decode(plaintext)}")
@@ -66,15 +64,15 @@ class Set1:
         print("\n-- Challenge 4 - Detect single-char XOR --")
 
         file_name = "data_S1C4.txt"
-        hex_ciphertext = ut.import_data(file_name)
+        ciphertext_hex = ut.import_data(file_name)
 
-        def text_breaker():
-            for line_index, line in enumerate(hex_ciphertext.splitlines()):
+        def crack_text():
+            for line_index, line in enumerate(ciphertext_hex.splitlines()):
                 data = bytes.fromhex(line)
-                score, byte = bo.single_byte_xor_breaker(data)
+                score, byte = bo.crack_single_byte_xor(data)
                 yield score, byte, line_index, data
 
-        score, byte, line_index, data = max(text_breaker())
+        score, byte, line_index, data = max(crack_text())
         plaintext = bo.single_byte_xor(byte, data)
 
         print(f"Hex data file                    : {file_name}")
@@ -87,14 +85,13 @@ class Set1:
     def challenge_5():
         print("\n-- Challenge 5 - Implement repeating-key XOR --")
 
-        stanza = ("Burning 'em, if you ain't quick and nimble\n"
-                  "I go crazy when I hear a cymbal")
+        plaintext = encode("Burning 'em, if you ain't quick and nimble\n"
+                           "I go crazy when I hear a cymbal")
         key = encode("ICE")
-        data = encode(stanza)
-        ciphertext = bo.repeating_key_xor(data, key)
+        ciphertext = bo.repeating_key_xor(plaintext, key)
 
-        print(f"Key                                : {key}")
-        print(f"Plaintext                          : \n{stanza}")
+        print(f"Key                                : {decode(key)}")
+        print(f"Plaintext                          : \n{decode(plaintext)}")
         print(f"Repeating key encrypt (hex encode) : {ciphertext.hex()}")
         return (ciphertext.hex())
 
@@ -111,15 +108,15 @@ class Set1:
         print(f"Edit distance : {bo.edit_distance(data_1, data_2)}")
         print(f"-- Part 2 --")
 
-        B64_ciphertext = ut.import_data("data_S1C6.txt")
-        data = b64decode(B64_ciphertext)
-        likely_key_sizes = bo.find_key_size(40, data)
+        ciphertext_b64 = ut.import_data("data_S1C6.txt")
+        ciphertext = b64decode(ciphertext_b64)
+        likely_key_sizes = bo.find_key_size(40, ciphertext)
 
         # Find most likely key.
         def key_comparison():
             for key_size in likely_key_sizes[0:3]:
-                key = bo.key_finder(key_size, data)
-                secret = bo.repeating_key_xor(data, key)
+                key = bo.key_finder(key_size, ciphertext)
+                secret = bo.repeating_key_xor(ciphertext, key)
                 score = bo.text_scorer(secret).score()
                 yield score, key, secret
 
@@ -135,40 +132,23 @@ class Set1:
         print(f"\n-- Challenge 7 - AES in ECB mode --")
 
         key = encode("YELLOW SUBMARINE")
-        data = b64decode(ut.import_data("data_S1C7.txt"))
-        plaintext = ocl.AESECB(key).decrypt(data)
+        ciphertext = b64decode(ut.import_data("data_S1C7.txt"))
+        plaintext = ocl.AESECB(key).decrypt(ciphertext)
 
-        print(f"Key    : {decode(key)}")
-        print(f"Secret : \n{decode(plaintext[:90])}...")
+        print(f"Key       : {decode(key)}")
+        print(f"Plaintext : \n{decode(plaintext[:90])}...")
 
     @staticmethod
     def challenge_8():
         print(f"\n-- Challenge 8 - Detect AES in ECB mode --")
-        print(f"-- Method 1 --")
 
-        hex_ciphertext = ut.import_data("data_S1C8.txt")
-
-        def text_breaker():
-            for line_index, line in enumerate(hex_ciphertext.splitlines()):
-                data = bytes.fromhex(line)
-                unique_char_instances = len(list(Counter(data).items()))
-                yield unique_char_instances, line_index
-
-        unique_char_instances, line_index = min(text_breaker())
-        print(
-            f"Assume ECB 1:1 mapping has low diversity of characters compared"
-            " to random data")
-        print(f"Lowest number of unique chars : {unique_char_instances}")
-        print(f"Corresponding line            : {line_index}")
-        print(f"-- Method 2 --")
-
+        ciphertext_hex = ut.import_data("data_S1C8.txt")
         # Find if data contains duplicate blocks.
-        for line_index2, line in enumerate(hex_ciphertext.splitlines()):
-            if bo.ECB_mode_check(bytes.fromhex(line)):
+        for line_index, line in enumerate(ciphertext_hex.splitlines()):
+            if bo.is_ecb_encrypted(bytes.fromhex(line)):
                 break
 
-        print(f"Find line with duplicate blocks")
-        print(f"Corresponding line            : {line_index2}")
+        print(f"Line with duplicate blocks : {line_index}")
 
 
 class Set2:
@@ -323,14 +303,14 @@ class Set2:
         # Create an email that shows its position in the encryption.
         position_email = base_email
         # Look for two identical blocks in encryption.
-        while not bo.ECB_mode_check(ocl.profile_create(position_email)):
+        while not bo.is_ecb_encrypted(ocl.profile_create(position_email)):
             position_email = "c" + position_email
 
         print(f"Position finding email       : {position_email}")
 
         # Find position at which duplicated block starts changing.
         position = 0
-        while bo.ECB_mode_check(ocl.profile_create(position_email)):
+        while bo.is_ecb_encrypted(ocl.profile_create(position_email)):
             position_email_list = list(position_email)
             position_email_list[position] = "d"
             position_email = "".join(position_email_list)
@@ -486,39 +466,107 @@ class Set3:
         output_size = len(ciphertext)
         model_size = int(len(ciphertext) / block_size)
 
+        print(f"Ciphertext           : {ciphertext}")
         print(f"Assumed Block Size   : {block_size}")
         print(f"Output size in bytes : {output_size}")
         print(f"Number of Blocks     : {model_size}")
-        print(f"revealed data        : {oracle.reveal()}")
-        print(f"revealed data depad  : {bo.depad(oracle.reveal())}")
-        print(f"Data length          : {len(bo.depad(oracle.reveal()))}")
+        print(f"Revealed data        : {oracle.reveal()}")
+        print(f"Revealed data depad  : {bo.depad(oracle.reveal())}")
+        print(f"Revealed data length : {len(bo.depad(oracle.reveal()))}")
 
-        # Find the last byte
-        injection_byte_index = output_size - block_size - 1
-        print(f"Injection byte index : {injection_byte_index}")
+        # Find the index of the last byte of the last but 1 block (Byte that affects padding byte after encryption).
+        '''injection_byte_index = output_size - block_size - 1
+        print(f"Injection byte index : {injection_byte_index}")'''
 
-        def single_byte_pad_crack(ciphertext, iv, index):
+        #decryption = b""
+        #expected_pad = 1
+
+        # Function that submits all possible values for specific byte index in a ciphertext and returns byte that oracle is able to depad.
+        # a bit is then flipped and depading is rerun to check that the padding is of a known value.
+        def single_byte_pad_crack(ciphertext, iv, index, expected_pad):
             crack_ciphertext = bytearray(ciphertext)
             for byte in range(255):
                 crack_ciphertext[index] = byte
                 if (oracle.depad_possible(crack_ciphertext, iv)):
-                    break
+                    # Check padding is of correct size by flipping a bit that should not affect the pad.
+                    # Only required if expected pad is 1.
+                    if expected_pad == 1:
+                        check_crack_ciphertext = crack_ciphertext[:]
+                        # Flip single bit by XORing with 1.
+                        check_crack_ciphertext[
+                            index - expected_pad] = check_crack_ciphertext[
+                                index - expected_pad] ^ 1
+                        # Check depad still possible.
+                        if (oracle.depad_possible(check_crack_ciphertext, iv)):
+                            break
+                    else:
+                        break
             return byte
 
-        valid_pad_byte = single_byte_pad_crack(ciphertext, iv,
-                                               injection_byte_index)
-        print(f"Valid injection byte : {bytes([valid_pad_byte])}")
+        def padding_oracle_attack(ciphertext, block_size, iv):
+            plaintext = b""
 
-        decrypted_byte = 1 ^ ciphertext[injection_byte_index] ^ valid_pad_byte
-        print(f"Decrypted byte       : {bytes([decrypted_byte])}")
+            # Divide ciphertext into blocks.
+            block_array = bo.blockify(ciphertext, block_size)
+            # Prepend the iv to blocks.
+            block_array.insert(0, iv)
 
-        next_byte_input = ciphertext[injection_byte_index -
-                                     1] ^ decrypted_byte ^ 2
-        print(next_byte_input)
+            # Create block pairs for processing.
+            block_pairs = [(block_array[i], block_array[i + 1])
+                           for i in (range(len(block_array) - 1))]
+
+            for penultimate_block, end_block in reversed(block_pairs):
+                decryption = b""
+                crack_block = penultimate_block[:]
+                # Crack each byte in the block.
+                for byte_index in reversed(range(block_size)):
+                    expected_pad = block_size - byte_index
+
+                    crack_ciphertext = b"".join([crack_block, end_block])
+
+                    # Find the valid pad byte.
+                    valid_pad_byte = single_byte_pad_crack(
+                        crack_ciphertext, iv, byte_index, expected_pad)
+
+                    # Find the plaintext byte using the valid pad byte.
+                    decrypted_byte = expected_pad ^ penultimate_block[
+                        byte_index] ^ valid_pad_byte
+
+                    # Prepend decrypted byte to decryption.
+                    decryption = b"".join(
+                        [bytes([decrypted_byte]), decryption])
+
+                    # Update crack block by setting all unknown pad bytes to bytes that create expected pad when decrypted.
+                    for index in range(block_size - 1,
+                                       block_size - expected_pad - 1, -1):
+                        crack_block_prepend = crack_block[:index]
+                        crack_block_append = crack_block[index + 1:]
+                        new_crack_byte = penultimate_block[index] ^ decryption[
+                            -(block_size - index)] ^ expected_pad + 1
+
+                        crack_block = b"".join([
+                            crack_block_prepend,
+                            bytes([new_crack_byte]), crack_block_append
+                        ])
+
+                # Update plaintext by prepending decrypted block.
+                plaintext = b"".join([decryption, plaintext])
+                print(plaintext)
+            # Remove padding from plaintext.
+            print(plaintext)
+            plaintext = bo.depad(plaintext)
+            return plaintext
+
+        plaintext = padding_oracle_attack(ciphertext, block_size, iv)
+        print(f'Plaintext     : {plaintext}')
+        if plaintext == bo.depad(oracle.reveal()):
+            print("---------------Success------------------")
+        else:
+            print("XXXXXXXXXXXXXXXXFailureXXXXXXXXXXXXXXXX")
 
 
 def run_challenges():
-    # Set 1
+    # Set 1.
     Set1.challenge_1()
     Set1.challenge_2()
     Set1.challenge_3()
@@ -528,7 +576,7 @@ def run_challenges():
     Set1.challenge_7()
     Set1.challenge_8()
 
-    # Set 2
+    # Set 2.
     Set2.challenge_9()
     Set2.challenge_10()
     Set2.challenge_11()
@@ -538,7 +586,7 @@ def run_challenges():
     Set2.challenge_15()
     Set2.challenge_16()
 
-    # Set 3
+    # Set 3.
     Set3.challenge_17()
 
 
@@ -547,9 +595,9 @@ def main():
     # https://cryptopals.com
     startTime = time.time()
 
-    # profiling stat options
-    # function_stats('set_1.challenge_4()')
-    # print(sys.path)
+    # Profiling stat options.
+    '''# function_stats('set_1.challenge_4()')
+    print(sys.path)'''
 
     run_challenges()
 

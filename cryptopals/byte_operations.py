@@ -19,7 +19,7 @@ def single_byte_xor(byte, byte_array):
     return xor(byte_array, byte * len(byte_array))
 
 
-def single_byte_xor_breaker(ciphertext):
+def crack_single_byte_xor(ciphertext):
     def attempt_crack():
         for char in range(256):
             byte = bytes([char])
@@ -68,7 +68,7 @@ def key_finder(key_size, data):
     output_list = [bytes(row.tolist()) for row in data_array.T]
 
     # Return most promising key of key_size size.
-    return b"".join([single_byte_xor_breaker(item)[1] for item in output_list])
+    return b"".join([crack_single_byte_xor(item)[1] for item in output_list])
 
 
 def pad(block_size, data):
@@ -89,11 +89,18 @@ def depad(data):
     return data[0:-pad_size]
 
 
+def blockify(ciphertext, block_size):
+    return [
+        ciphertext[i:i + block_size]
+        for i in range(0, len(ciphertext), block_size)
+    ]
+
+
 def random_AES_key():
     return secrets.token_bytes(16)
 
 
-def ECB_mode_check(data):
+def is_ecb_encrypted(data):
     array = np.frombuffer(data, dtype="uint8").reshape(-1, 16)
     duplicate_blocks = len(array) - len(np.unique(array, axis=0))
     return True if 0 < duplicate_blocks else False

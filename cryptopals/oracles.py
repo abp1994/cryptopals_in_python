@@ -134,7 +134,7 @@ class C17:
 
     def depad_possible(self, bytes, iv):
         data = AESCBC(iv, self.key).decrypt(bytes)
-        #try depadding data catch error
+        # Try depadding data catch error.
         try:
             bo.depad(data)
             outcome = True

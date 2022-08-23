@@ -4,6 +4,8 @@ import pstats
 import sys
 from pathlib import Path
 
+import utils as ut
+
 
 def blockPrint():
     sys.stdout = open(os.devnull, 'w')
