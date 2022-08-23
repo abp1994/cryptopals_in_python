@@ -197,20 +197,23 @@ class Set2:
         key = b"YELLOW SUBMARINE"
         iv = bytes([0]) * 16
         CBC_2 = ocl.AESCBC(iv, key)
-        decrypted = decode(bo.depad(CBC_2.decrypt(ciphertext)))
-        print(f"CBC decrypted message : \n{decrypted[0:90]}...")
+        plaintext = bo.depad(CBC_2.decrypt(ciphertext))
+        print(f"CBC decrypted message : \n{decode(plaintext[0:90])}...")
+        return decode(plaintext)
 
     @staticmethod
     def challenge_11():
         print(f"\n-- Challenge 11 - An ECB/CBC detection oracle --")
 
         # Create and profile 5 oracles.
-        oracles = [ocl.C11() for i in range(5)]
+        oracles = [ocl.C11() for _ in range(5)]
+        oracle_modes = [oracle.mode for oracle in oracles]
         detected_modes = [ocl.Profiler(oracle).mode for oracle in oracles]
 
         print(f"Random AES key : {bo.random_AES_key()}")
-        print(f"Oracle modes   : {[oracle.mode for oracle in oracles]}")
+        print(f"Oracle modes   : {oracle_modes}")
         print(f"Detected modes : {detected_modes}")
+        return oracle_modes, detected_modes
 
     @staticmethod
     def challenge_12():
