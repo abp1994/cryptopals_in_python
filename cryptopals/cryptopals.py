@@ -422,11 +422,11 @@ class Set2:
         b = b"ICE ICE BABY\x05\x05\x05\x05"
         c = b"ICE ICE BABY\x01\x02\x03\x04"
 
-        for i in [a, b, c]:
+        for padded_text in [a, b, c]:
             try:
-                print(f"Depad of {i} : {bo.depad(i)}")
+                print(f"Depad of {padded_text} : {bo.depad(padded_text)}")
             except Exception as e:
-                print(f"Depad of {i} : {e}")
+                print(f"Depad of {padded_text} : {e}")
 
     @staticmethod
     def challenge_16():
