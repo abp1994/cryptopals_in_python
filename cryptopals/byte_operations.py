@@ -107,20 +107,14 @@ def is_ecb_encrypted(data):
 
 
 def detect_adjacent_duplicate_blocks(data, block_size):
-    data_size_in_blocks = int(len(data) / block_size)
-    previous_block = b''
+    blocks = blockify(data, block_size)
     duplicate_found = False
     duplicate_block_index = 0
-    for block_index in range(data_size_in_blocks):
-        block_start_byte_index = block_index * block_size
-        block_end_byte_index = block_start_byte_index + block_size
-        current_block = data[block_start_byte_index:block_end_byte_index]
-        if current_block == previous_block:
+
+    for index in range(len(blocks), len(blocks) - 1):
+        if blocks[index] == blocks[index + 1]:
+            duplicate_block_index = index
             duplicate_found = True
-            duplicate_block_index = block_index
-            break
-        else:
-            previous_block = current_block
 
     return duplicate_found, duplicate_block_index
 
