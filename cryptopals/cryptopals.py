@@ -583,8 +583,19 @@ class Set3:
         else:
             print("XXXXXXXXXXXXXXXXFailureXXXXXXXXXXXXXXXX")
 
+    def challenge_18():
+
+        ciphertext = b"L77na/nrFsKvynd6HzOoG7GHTLXsTVu9qvY/2syLXzhPweyyMTJULu/6/kXX0KSvoOLSFQ=="
+
+        key = b"YELLOW SUBMARINE"
+        nonce = (0).to_bytes(8, byteorder="little")
+        count = (0).to_bytes(8, byteorder="little")
+        print(nonce)
+        print(count)
+
 
 def run_challenges():
+    """
     # Set 1.
     Set1.challenge_1()
     Set1.challenge_2()
@@ -606,7 +617,8 @@ def run_challenges():
     Set2.challenge_16()
 
     # Set 3.
-    Set3.challenge_17()
+    Set3.challenge_17()"""
+    Set3.challenge_18()
 
 
 def main():
