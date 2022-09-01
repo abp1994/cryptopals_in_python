@@ -205,13 +205,13 @@ class text_scorer:
     def score(self):
 
         # ---Prescreen---
-        # check for high letter proportion
+        # Check for high letter proportion.
         letter_instances = self.non_alphabet_chars.sub(b'', self.byte_array)
 
         if (sum(letter_instances) / self.total_chars) < 0.8:
             return 0
 
-        # check for low abnormal character proportion
+        # Check for low abnormal character proportion.
         abnormal_char_instances = self.desireable_chars.sub(
             b'', self.byte_array)
 
