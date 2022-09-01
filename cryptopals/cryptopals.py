@@ -462,9 +462,9 @@ class Set2:
         # Check decryption.
         print(f"Decrypted data : \n{oracle.decrypt(bit_flipped_ciphertext_2)}")
         print(
-            f"Admin property present : {oracle.check_admin(bit_flipped_ciphertext_2)}"
+            f"Admin property present : {oracle.is_admin(bit_flipped_ciphertext_2)}"
         )
-        return oracle.check_admin(bit_flipped_ciphertext_2)
+        return oracle.is_admin(bit_flipped_ciphertext_2)
 
 
 class Set3:
