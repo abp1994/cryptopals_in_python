@@ -187,9 +187,9 @@ class Profiler:
         self.oracle = oracle
         self.model_output = oracle.encrypt(b"")
         self.model_size = len(self.model_output)
-
         self.mode = self.mode_check()
         self.block_size, self.initial_pad_size = self.find_block_size()
+
         if self.mode == "ECB":
             self.input_byte_index = self.find_input_byte_index(self.block_size)
             self.input_block_index = self.input_byte_index // self.block_size
