@@ -147,22 +147,26 @@ class C17:
         return bo.pad(16, self.data)
 
 
+# C13
 def profile_create(email):
     data = profile_parse(email)
     padded_data = bo.pad(16, data)
     return AESECB(b"PASSWORDPASSWORD").encrypt(padded_data)
 
 
+# C13
 def profile_parse(email):
     if 0 < sum(map(email.count, ("=", "&"))):
         raise Exception("Invalid character encountered")
     return encode(f"email={email}&uid=10&role=user")
 
 
+# C13
 def profile_decrypt(data):
     return AESECB(b"PASSWORDPASSWORD").decrypt(data)
 
 
+# C13
 def profile_unpack(data):
     return {
         decode(key): decode(value)
@@ -171,8 +175,8 @@ def profile_unpack(data):
 
 
 def ECB_check(oracle):
-    data = oracle.encrypt(b"Z" * 50)
-    blocks = np.frombuffer(data, dtype="uint8").reshape(-1, 16)
+    ciphertext = oracle.encrypt(b"Z" * 50)
+    blocks = np.frombuffer(ciphertext, dtype="uint8").reshape(-1, 16)
     duplicate_blocks = len(blocks) - len(np.unique(blocks, axis=0))
     return True if 0 < duplicate_blocks else False
 
