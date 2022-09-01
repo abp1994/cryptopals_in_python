@@ -84,31 +84,29 @@ class C12:
         return AESECB(self.key).encrypt(data)
 
 
-# C13
-def profile_create(email):
-    data = profile_parse(email)
-    padded_data = bo.pad(16, data)
-    return AESECB(b"PASSWORDPASSWORD").encrypt(padded_data)
+class C13:
+    @staticmethod
+    def profile_create(email):
+        data = C13.profile_parse(email)
+        padded_data = bo.pad(16, data)
+        return AESECB(b"PASSWORDPASSWORD").encrypt(padded_data)
 
+    @staticmethod
+    def profile_parse(email):
+        if 0 < sum(map(email.count, ("=", "&"))):
+            raise Exception("Invalid character encountered")
+        return encode(f"email={email}&uid=10&role=user")
 
-# C13
-def profile_parse(email):
-    if 0 < sum(map(email.count, ("=", "&"))):
-        raise Exception("Invalid character encountered")
-    return encode(f"email={email}&uid=10&role=user")
+    @staticmethod
+    def profile_decrypt(data):
+        return AESECB(b"PASSWORDPASSWORD").decrypt(data)
 
-
-# C13
-def profile_decrypt(data):
-    return AESECB(b"PASSWORDPASSWORD").decrypt(data)
-
-
-# C13
-def profile_unpack(data):
-    return {
-        decode(key): decode(value)
-        for key, value in (line.split(b"=") for line in data.split(b"&"))
-    }
+    @staticmethod
+    def profile_unpack(data):
+        return {
+            decode(key): decode(value)
+            for key, value in (line.split(b"=") for line in data.split(b"&"))
+        }
 
 
 class C14:
