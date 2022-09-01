@@ -265,19 +265,20 @@ class Set2:
 
         text = """foo=bar&baz=qux&zap=zazzle"""
         email = "hello@world.com"
-        parsed = ocl.profile_parse(email)
+        oracle = ocl.C13
+        parsed = oracle.parse_profile(email)
 
         print(f"Example string   : {text}")
-        print(f"Unpacked profile : {ocl.profile_unpack(encode(text))}")
+        print(f"Unpacked profile : {oracle.unpack_profile(encode(text))}")
         print(f"Example Email    : {email}")
         print(f"Parsed profile   : {parsed}")
-        print(f"Unpacked profile : {ocl.profile_unpack(parsed)}")
+        print(f"Unpacked profile : {oracle.unpack_profile(parsed)}")
         print(f"-- Part 2 --")
 
         base_email = "user@hack.com"
-        base_encryption = ocl.profile_create(base_email)
+        base_encryption = oracle.create_profile(base_email)
         base_encryption_len = len(base_encryption)
-        base_decryption = ocl.profile_decrypt(base_encryption)
+        base_decryption = oracle.decrypt_profile(base_encryption)
 
         print(f"Base email         : {base_email}")
         print(f"Encrypted profile  : {base_encryption}")
@@ -290,7 +291,7 @@ class Set2:
 
         while len(end_align_encryption) == base_encryption_len:
             end_align_email = "a" + end_align_email
-            end_align_encryption = ocl.profile_create(end_align_email)
+            end_align_encryption = oracle.create_profile(end_align_email)
         end_align_encryption_len = len(end_align_encryption)
 
         print(f"End aligning email : {end_align_email}")
@@ -301,8 +302,8 @@ class Set2:
         # block and crop useful blocks.
         bytes_to_remove = len(b"user")
         crop_email = ("b" * bytes_to_remove) + end_align_email
-        crop = ocl.profile_create(crop_email)[0:48]
-        decryption = ocl.profile_decrypt(crop)
+        crop = oracle.create_profile(crop_email)[0:48]
+        decryption = oracle.decrypt_profile(crop)
 
         print(f"Bytes to push into new block : {bytes_to_remove}")
         print(f"Crop aligning email          : {crop_email}")
@@ -313,14 +314,14 @@ class Set2:
         # Create an email that shows its position in the encryption.
         position_email = base_email
         # Look for two identical blocks in encryption.
-        while not bo.is_ecb_encrypted(ocl.profile_create(position_email)):
+        while not bo.is_ecb_encrypted(oracle.create_profile(position_email)):
             position_email = "c" + position_email
 
         print(f"Position finding email       : {position_email}")
 
         # Find position at which duplicated block starts changing.
         position = 0
-        while bo.is_ecb_encrypted(ocl.profile_create(position_email)):
+        while bo.is_ecb_encrypted(oracle.create_profile(position_email)):
             position_email_list = list(position_email)
             position_email_list[position] = "d"
             position_email = "".join(position_email_list)
@@ -340,17 +341,17 @@ class Set2:
         # Craft new ending for encrypted data.
         new_end = decode(bo.pad(16, b"admin"))
         new_end_encryption_email = block_end_email + new_end
-        cut = ocl.profile_create(new_end_encryption_email)[32:48]
-        decrypted_cut = ocl.profile_decrypt(cut)
+        cut = oracle.create_profile(new_end_encryption_email)[32:48]
+        decrypted_cut = oracle.decrypt_profile(cut)
 
         print(f"new end encrypting email     : {new_end_encryption_email}")
         print(f"new ending encryption        : {cut}")
         print(f"new ending decrypted         : {decrypted_cut}")
 
         attacker_encrypted_profile = crop + cut
-        attacker_decrypted_profile = ocl.profile_decrypt(
+        attacker_decrypted_profile = oracle.decrypt_profile(
             attacker_encrypted_profile)
-        attacker_profile = ocl.profile_unpack(
+        attacker_profile = oracle.unpack_profile(
             bo.depad(attacker_decrypted_profile))
 
         print(f"Attacker encrypted profile   : {attacker_encrypted_profile}")
@@ -422,11 +423,11 @@ class Set2:
         b = b"ICE ICE BABY\x05\x05\x05\x05"
         c = b"ICE ICE BABY\x01\x02\x03\x04"
 
-        for i in [a, b, c]:
+        for padded_text in [a, b, c]:
             try:
-                print(f"Depad of {i} : {bo.depad(i)}")
+                print(f"Depad of {padded_text} : {bo.depad(padded_text)}")
             except Exception as e:
-                print(f"Depad of {i} : {e}")
+                print(f"Depad of {padded_text} : {e}")
 
     @staticmethod
     def challenge_16():
@@ -462,9 +463,9 @@ class Set2:
         # Check decryption.
         print(f"Decrypted data : \n{oracle.decrypt(bit_flipped_ciphertext_2)}")
         print(
-            f"Admin property present : {oracle.check_admin(bit_flipped_ciphertext_2)}"
+            f"Admin property present : {oracle.is_admin(bit_flipped_ciphertext_2)}"
         )
-        return oracle.check_admin(bit_flipped_ciphertext_2)
+        return oracle.is_admin(bit_flipped_ciphertext_2)
 
 
 class Set3:

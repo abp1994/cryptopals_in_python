@@ -107,20 +107,15 @@ def is_ecb_encrypted(data):
 
 
 def detect_adjacent_duplicate_blocks(data, block_size):
-    data_size_in_blocks = int(len(data) / block_size)
-    previous_block = b''
+
+    blocks = blockify(data, block_size)
     duplicate_found = False
     duplicate_block_index = 0
-    for block_index in range(data_size_in_blocks):
-        block_start_byte_index = block_index * block_size
-        block_end_byte_index = block_start_byte_index + block_size
-        current_block = data[block_start_byte_index:block_end_byte_index]
-        if current_block == previous_block:
+
+    for index in range(len(blocks) - 1):
+        if blocks[index] == blocks[index + 1]:
             duplicate_found = True
-            duplicate_block_index = block_index
-            break
-        else:
-            previous_block = current_block
+            duplicate_block_index = index + 1
 
     return duplicate_found, duplicate_block_index
 
@@ -205,13 +200,13 @@ class text_scorer:
     def score(self):
 
         # ---Prescreen---
-        # check for high letter proportion
+        # Check for high letter proportion.
         letter_instances = self.non_alphabet_chars.sub(b'', self.byte_array)
 
         if (sum(letter_instances) / self.total_chars) < 0.8:
             return 0
 
-        # check for low abnormal character proportion
+        # Check for low abnormal character proportion.
         abnormal_char_instances = self.desireable_chars.sub(
             b'', self.byte_array)
 

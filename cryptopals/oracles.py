@@ -84,6 +84,31 @@ class C12:
         return AESECB(self.key).encrypt(data)
 
 
+class C13:
+    @staticmethod
+    def create_profile(email):
+        data = C13.parse_profile(email)
+        padded_data = bo.pad(16, data)
+        return AESECB(b"PASSWORDPASSWORD").encrypt(padded_data)
+
+    @staticmethod
+    def parse_profile(email):
+        if 0 < sum(map(email.count, ("=", "&"))):
+            raise Exception("Invalid character encountered")
+        return encode(f"email={email}&uid=10&role=user")
+
+    @staticmethod
+    def decrypt_profile(data):
+        return AESECB(b"PASSWORDPASSWORD").decrypt(data)
+
+    @staticmethod
+    def unpack_profile(data):
+        return {
+            decode(key): decode(value)
+            for key, value in (line.split(b"=") for line in data.split(b"&"))
+        }
+
+
 class C14:
     def __init__(self):
         self.random_prefix = secrets.token_bytes(secrets.randbelow(64) + 1)
@@ -113,7 +138,7 @@ class C16:
         data = decode(AESCBC(self.iv, self.key).decrypt(bytes))
         return [tuple(pair.split('=', 1)) for pair in data.split(';')]
 
-    def check_admin(self, bytes):
+    def is_admin(self, bytes):
         decrypted_fields = self.decrypt(bytes)
         return ("admin", "true") in decrypted_fields
 
@@ -147,45 +172,15 @@ class C17:
         return bo.pad(16, self.data)
 
 
-def profile_create(email):
-    data = profile_parse(email)
-    padded_data = bo.pad(16, data)
-    return AESECB(b"PASSWORDPASSWORD").encrypt(padded_data)
-
-
-def profile_parse(email):
-    if 0 < sum(map(email.count, ("=", "&"))):
-        raise Exception("Invalid character encountered")
-    return encode(f"email={email}&uid=10&role=user")
-
-
-def profile_decrypt(data):
-    return AESECB(b"PASSWORDPASSWORD").decrypt(data)
-
-
-def profile_unpack(data):
-    return {
-        decode(key): decode(value)
-        for key, value in (line.split(b"=") for line in data.split(b"&"))
-    }
-
-
-def ECB_check(oracle):
-    data = oracle.encrypt(b"Z" * 50)
-    blocks = np.frombuffer(data, dtype="uint8").reshape(-1, 16)
-    duplicate_blocks = len(blocks) - len(np.unique(blocks, axis=0))
-    return True if 0 < duplicate_blocks else False
-
-
 # Functions used to profile an encryption oracle.
 class Profiler:
     def __init__(self, oracle):
         self.oracle = oracle
         self.model_output = oracle.encrypt(b"")
         self.model_size = len(self.model_output)
-
         self.mode = self.mode_check()
         self.block_size, self.initial_pad_size = self.find_block_size()
+
         if self.mode == "ECB":
             self.input_byte_index = self.find_input_byte_index(self.block_size)
             self.input_block_index = self.input_byte_index // self.block_size
