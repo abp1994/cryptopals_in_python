@@ -1,9 +1,14 @@
+import base64
 import sys
 import time
 from base64 import b64decode, b64encode
 from pathlib import Path
 
+from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
+
 sys.path.append(str(Path(__file__).parent.resolve()))
+
+import struct
 
 import byte_operations as bo
 import oracles as ocl
@@ -584,14 +589,57 @@ class Set3:
             print("XXXXXXXXXXXXXXXXFailureXXXXXXXXXXXXXXXX")
 
     def challenge_18():
+        print(f"\n-- Challenge 18 - Implement CTR, the stream cipher mode --")
+        ciphertext = b64decode(
+            "L77na/nrFsKvynd6HzOoG7GHTLXsTVu9qvY/2syLXzhPweyyMTJULu/6/kXX0KSvoOLSFQ=="
+        )
 
-        ciphertext = b"L77na/nrFsKvynd6HzOoG7GHTLXsTVu9qvY/2syLXzhPweyyMTJULu/6/kXX0KSvoOLSFQ=="
-
-        key = b"YELLOW SUBMARINE"
+        key = encode("YELLOW SUBMARINE")
         nonce = (0).to_bytes(8, byteorder="little")
         count = (0).to_bytes(8, byteorder="little")
-        print(nonce)
-        print(count)
+        concatenated_nonce_and_counter = b"".join([nonce, count])
+
+        keystream = ocl.AESECB(key).encrypt(concatenated_nonce_and_counter)
+        print(concatenated_nonce_and_counter)
+        print(keystream)
+        print(bo.xor(keystream, ciphertext[:16]))
+        '''
+        def chunks(original):
+            for i in range(0, len(original), 16):
+                yield original[i:i + 16]
+
+        def decrypt(chunks):
+            for j, chunk in enumerate(chunks):
+                yield Cipher(
+                    algorithms.AES(key),
+                    modes.CTR((j + 1).to_bytes(
+                        16, byteorder='little'))).decryptor().update(chunk)
+
+        print(b''.join(
+            decrypt(
+                chunks(
+                    b'L77na/nrFsKvynd6HzOoG7GHTLXsTVu9qvY/2syLXzhPweyyMTJULu/6/kXX0KSvoOLSFQ=='
+                ))))'''
+
+        key = encode("YELLOW SUBMARINE")
+        nonce = (0).to_bytes(8, byteorder="little")
+        count = (0).to_bytes(8, byteorder="little")
+        concatenated_nonce_and_counter = b"".join([nonce, count])
+
+        cipher = Cipher(algorithms.AES(key),
+                        modes.CTR(concatenated_nonce_and_counter))
+
+        encryptor = cipher.encryptor()
+
+        ct = encryptor.update(b"a secret message") + encryptor.finalize()
+
+        print(ct)
+
+        decryptor = cipher.decryptor()
+
+        d = decryptor.update(ciphertext) + decryptor.finalize()
+
+        print(d)
 
 
 def run_challenges():

@@ -27,7 +27,7 @@ class AESECB:
 
     def decrypt(self, data):
         decryptor = self.cipher.decryptor()
-        return decryptor.update(data) + decryptor.finalize()
+        return decryptor.update(data)
 
 
 class AESCBC:
@@ -45,15 +45,32 @@ class AESCBC:
             output_message = b"".join([output_message, iv])
         return output_message
 
-    def decrypt(self, data):
+    def decrypt(self, ciphertext):
         iv = self.iv
         output_message = b""
-        input_message = np.frombuffer(data, dtype="uint8").reshape(-1, 16)
+        input_message = np.frombuffer(ciphertext,
+                                      dtype="uint8").reshape(-1, 16)
         for block in input_message:
             step_1 = AESECB(self.key).decrypt(block)
             output_message = b"".join([output_message, bo.xor(iv, step_1)])
             iv = block
         return output_message
+
+
+class AESCTR:
+    def __init__(self, nonce, key):
+        self.nonce = nonce
+        self.key = key
+        self.cipher = Cipher(algorithms.AES(key),
+                             modes.CTR(nonce),
+                             backend=default_backend())
+
+    def encrypt(self):
+        return self.cipher.decryptor()
+
+    def decrypt(self, ciphertext):
+        decryptor = self.cipher.decryptor()
+        return decryptor.update(ciphertext) + decryptor.finalize()
 
 
 class C11:
