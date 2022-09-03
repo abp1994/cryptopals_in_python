@@ -3,12 +3,11 @@ import sys
 import time
 from base64 import b64decode, b64encode
 from pathlib import Path
+from random import random
 
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 
 sys.path.append(str(Path(__file__).parent.resolve()))
-
-import struct
 
 import byte_operations as bo
 import oracles as ocl
@@ -595,51 +594,25 @@ class Set3:
         )
 
         key = encode("YELLOW SUBMARINE")
-        nonce = (0).to_bytes(8, byteorder="little")
-        count = (0).to_bytes(8, byteorder="little")
-        concatenated_nonce_and_counter = b"".join([nonce, count])
+        nonce = b'\x00' * 8
 
-        keystream = ocl.AESECB(key).encrypt(concatenated_nonce_and_counter)
-        print(concatenated_nonce_and_counter)
-        print(keystream)
-        print(bo.xor(keystream, ciphertext[:16]))
-        '''
-        def chunks(original):
-            for i in range(0, len(original), 16):
-                yield original[i:i + 16]
+        cipher = ocl.AESCTR(nonce, key)
+        plaintext = cipher.decrypt(ciphertext)
 
-        def decrypt(chunks):
-            for j, chunk in enumerate(chunks):
-                yield Cipher(
-                    algorithms.AES(key),
-                    modes.CTR((j + 1).to_bytes(
-                        16, byteorder='little'))).decryptor().update(chunk)
+        print(decode(plaintext))
 
-        print(b''.join(
-            decrypt(
-                chunks(
-                    b'L77na/nrFsKvynd6HzOoG7GHTLXsTVu9qvY/2syLXzhPweyyMTJULu/6/kXX0KSvoOLSFQ=='
-                ))))'''
+        secret = encode("Top Secret info Here -blah blah blah-")
+        key = encode("PASSWORDPASSWORD")
+        nonce = b'\x00' * 8
+        cipher2 = ocl.AESCTR(nonce, key)
 
-        key = encode("YELLOW SUBMARINE")
-        nonce = (0).to_bytes(8, byteorder="little")
-        count = (0).to_bytes(8, byteorder="little")
-        concatenated_nonce_and_counter = b"".join([nonce, count])
+        cipher_chunk_1 = cipher2.encrypt(secret[:7])
+        cipher_chunk_2 = cipher2.encrypt(secret[7:])
 
-        cipher = Cipher(algorithms.AES(key),
-                        modes.CTR(concatenated_nonce_and_counter))
+        chunk_1 = cipher2.decrypt(cipher_chunk_1)
+        chunk_2 = cipher2.decrypt(cipher_chunk_2)
 
-        encryptor = cipher.encryptor()
-
-        ct = encryptor.update(b"a secret message") + encryptor.finalize()
-
-        print(ct)
-
-        decryptor = cipher.decryptor()
-
-        d = decryptor.update(ciphertext) + decryptor.finalize()
-
-        print(d)
+        print(chunk_1, chunk_2)
 
 
 def run_challenges():
