@@ -629,6 +629,10 @@ class Set3:
         print(f"Plaintext          :  {decode(plaintext_2)}")
         return plaintext, secret, plaintext_2
 
+    def challenge_19():
+        print(f"\n-- Break fixed-nonce CTR mode using substitutions --")
+        return
+
 
 def run_challenges():
 
