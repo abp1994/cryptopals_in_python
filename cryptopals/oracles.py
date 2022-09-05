@@ -217,7 +217,7 @@ class C17:
         self.key = bo.random_AES_key()
 
         file_name = "data_S3C17.txt"
-        self.data = encode(
+        self.data = b64decode(
             random.choice(ut.import_data(file_name).splitlines()))
 
     def encrypt(self):
