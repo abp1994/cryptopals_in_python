@@ -21,13 +21,13 @@ class AESECB:
                              modes.ECB(),
                              backend=default_backend())
 
-    def encrypt(self, data):
+    def encrypt(self, plaintext):
         encryptor = self.cipher.encryptor()
-        return encryptor.update(data) + encryptor.finalize()
+        return encryptor.update(plaintext) + encryptor.finalize()
 
-    def decrypt(self, data):
+    def decrypt(self, ciphertext):
         decryptor = self.cipher.decryptor()
-        return decryptor.update(data) + decryptor.finalize()
+        return decryptor.update(ciphertext)
 
 
 class AESCBC:
@@ -35,25 +35,93 @@ class AESCBC:
         self.iv = iv
         self.key = key
 
-    def encrypt(self, data):
+    def encrypt(self, plaintext):
         iv = self.iv
         output_message = b""
-        input_message = np.frombuffer(data, dtype="uint8").reshape(-1, 16)
+        input_message = np.frombuffer(plaintext, dtype="uint8").reshape(-1, 16)
         for block in input_message:
             step_1 = bo.xor(iv, block)
             iv = AESECB(self.key).encrypt(step_1)
             output_message = b"".join([output_message, iv])
         return output_message
 
-    def decrypt(self, data):
+    def decrypt(self, ciphertext):
         iv = self.iv
         output_message = b""
-        input_message = np.frombuffer(data, dtype="uint8").reshape(-1, 16)
+        input_message = np.frombuffer(ciphertext,
+                                      dtype="uint8").reshape(-1, 16)
         for block in input_message:
             step_1 = AESECB(self.key).decrypt(block)
             output_message = b"".join([output_message, bo.xor(iv, step_1)])
             iv = block
         return output_message
+
+
+class AESCTR:
+    # Encryption/decryption using small endian nonce + counter
+    def __init__(self, nonce, key):
+        self.nonce = nonce
+        self.key = key
+        self.encryption_counter = 0
+        self.decryption_counter = 0
+        self.cipher = AESECB(self.key)
+        self.keystream_encryption_buffer = b""
+        self.keystream_decryption_buffer = b""
+
+    def encrypt(self, plaintext):
+        plaintext_size = len(plaintext)
+        # Generate keystream so buffer is larger than size of plaintext.
+        self.generate_keystream_buffer(plaintext_size, "encryption")
+
+        # Xor keystream with plaintext.
+        keystream = self.keystream_encryption_buffer[:plaintext_size]
+        ciphertext = bo.xor(keystream, plaintext)
+
+        # Remove xored bytes from keystream buffer.
+        self.keystream_encryption_buffer = self.keystream_encryption_buffer[
+            plaintext_size:]
+
+        return ciphertext
+
+    def decrypt(self, ciphertext):
+        ciphertext_size = len(ciphertext)
+        # Generate keystream so buffer is larger than size of ciphertext.
+        self.generate_keystream_buffer(ciphertext_size, "decryption")
+
+        # Xor keystream with ciphertext.
+        keystream = self.keystream_decryption_buffer[:ciphertext_size]
+        plaintext = bo.xor(keystream, ciphertext)
+
+        # Remove xored bytes from keystream buffer.
+        self.keystream_decryption_buffer = self.keystream_decryption_buffer[
+            ciphertext_size:]
+
+        return plaintext
+
+    def generate_keystream_buffer(self, desired_size, mode):
+        if mode == "encryption":
+            buffer_size = len(self.keystream_encryption_buffer)
+        else:
+            buffer_size = len(self.keystream_decryption_buffer)
+
+        while buffer_size < desired_size:
+            if mode == "encryption":
+                count = self.encryption_counter.to_bytes(8, byteorder="little")
+                self.encryption_counter += 1
+            else:
+                count = self.decryption_counter.to_bytes(8, byteorder="little")
+                self.decryption_counter += 1
+            buffer_size += 1
+
+            concatenated_nonce_and_counter = b"".join([self.nonce, count])
+
+            keystream = self.cipher.encrypt(concatenated_nonce_and_counter)
+            if mode == "encryption":
+                self.keystream_encryption_buffer = b"".join(
+                    [self.keystream_encryption_buffer, keystream])
+            else:
+                self.keystream_decryption_buffer = b"".join(
+                    [self.keystream_decryption_buffer, keystream])
 
 
 class C11:
@@ -149,7 +217,7 @@ class C17:
         self.key = bo.random_AES_key()
 
         file_name = "data_S3C17.txt"
-        self.data = encode(
+        self.data = b64decode(
             random.choice(ut.import_data(file_name).splitlines()))
 
     def encrypt(self):

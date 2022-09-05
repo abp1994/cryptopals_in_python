@@ -1,7 +1,13 @@
+import base64
 import sys
 import time
 from base64 import b64decode, b64encode
+from logging import raiseExceptions
 from pathlib import Path
+from pydoc import plain
+from random import random
+
+from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 
 sys.path.append(str(Path(__file__).parent.resolve()))
 
@@ -582,9 +588,50 @@ class Set3:
             print("---------------Success------------------")
         else:
             print("XXXXXXXXXXXXXXXXFailureXXXXXXXXXXXXXXXX")
+            raise Exception("C17 Failed")
+
+    def challenge_18():
+        print(f"\n-- Challenge 18 - Implement CTR, the stream cipher mode --")
+        ciphertext = b64decode(
+            "L77na/nrFsKvynd6HzOoG7GHTLXsTVu9qvY/2syLXzhPweyyMTJULu/6/kXX0KSvoOLSFQ=="
+        )
+
+        key = encode("YELLOW SUBMARINE")
+        nonce = b'\x00' * 8
+
+        cipher = ocl.AESCTR(nonce, key)
+        plaintext = cipher.decrypt(ciphertext)
+
+        print(f"Key                :  {decode(key)}")
+        print(f"Nonce              :  {nonce}")
+        print(f"Decrypted plaintext : {decode(plaintext)}")
+
+        secret = encode("Top Secret info Here -blah blah blah-")
+        key = encode("PASSWORDPASSWORD")
+        nonce = b'\x00\x01\x02\x03\x04\x05\x06\x07'
+        cipher2 = ocl.AESCTR(nonce, key)
+
+        cipher_chunk_1 = cipher2.encrypt(secret[:7])
+        cipher_chunk_2 = cipher2.encrypt(secret[7:])
+
+        chunk_1 = cipher2.decrypt(cipher_chunk_1)
+        chunk_2 = cipher2.decrypt(cipher_chunk_2)
+
+        plaintext_2 = b"".join([chunk_1, chunk_2])
+
+        print(f"Secret             :  {decode(secret)}")
+        print(f"Key                :  {decode(key)}")
+        print(f"Nonce              :  {nonce}")
+        print(f"Chunk 1 encryption :  {cipher_chunk_1}")
+        print(f"Chunk 2 encryption :  {cipher_chunk_2}")
+        print(f"Chunk 1 decryption :  {chunk_1}")
+        print(f"Chunk 2 decryption :  {chunk_2}")
+        print(f"Plaintext          :  {decode(plaintext_2)}")
+        return plaintext, secret, plaintext_2
 
 
 def run_challenges():
+
     # Set 1.
     Set1.challenge_1()
     Set1.challenge_2()
@@ -607,6 +654,7 @@ def run_challenges():
 
     # Set 3.
     Set3.challenge_17()
+    Set3.challenge_18()
 
 
 def main():
