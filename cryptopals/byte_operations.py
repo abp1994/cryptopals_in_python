@@ -10,7 +10,7 @@ def xor(a, b):
     return bytes(a_byte ^ b_byte for a_byte, b_byte in zip(a, b))
 
 
-#Calculate the bitwise Hamming Distance.
+# Calculate the bitwise Hamming Distance.
 def edit_distance(a, b):
     return sum([bin(byte).count("1") for byte in xor(a, b)])
 
@@ -36,24 +36,29 @@ def repeating_key_xor(ciphertext, key):
     return bytes([nth_xor(n, byte) for n, byte in enumerate(ciphertext)])
 
 
-def find_key_size(max_size, data):
+def find_key_size(max_key_size, data):
     samples = 10
-    normalised_edit_distance = np.zeros([samples])
     results = []
 
-    for keysize in range(1, max_size):
+    for keysize in range(1, max_key_size + 1):
+        normalised_edit_distance = np.zeros([samples])
         for pair in range(samples):
 
             # Take adjacent keysize size blocks.
-            ciphertext = data[(2 * pair) * keysize:(2 * pair + 1) * keysize]
-            key = data[(2 * pair + 1) * keysize:(2 * pair + 2) * keysize]
+            startIndex = (2 * pair) * keysize
+            middleIndex = (2 * pair + 1) * keysize
+            endIndex = (2 * pair + 2) * keysize
+
+            ciphertext = data[startIndex:middleIndex]
+            key = data[middleIndex:endIndex]
 
             # Calculate normalised edit distance.
-            normalised_edit_distance[pair] = edit_distance(ciphertext,
-                                                           key) / keysize
+            normalised_edit_distance[pair] = edit_distance(ciphertext, key) / keysize
 
         # Store average edit distance for keysize.
         results.append([np.average(normalised_edit_distance), keysize])
+
+    # Return keysizes in ascending order of score.
     return [row[1] for row in sorted(results)]
 
 
@@ -91,8 +96,7 @@ def depad(data):
 
 def blockify(ciphertext, block_size):
     return [
-        ciphertext[i:i + block_size]
-        for i in range(0, len(ciphertext), block_size)
+        ciphertext[i : i + block_size] for i in range(0, len(ciphertext), block_size)
     ]
 
 
@@ -120,8 +124,14 @@ def detect_adjacent_duplicate_blocks(data, block_size):
     return duplicate_found, duplicate_block_index
 
 
-def CBC_bit_flipper(prefix_bytes, input_butes, ciphertext, block_size,
-                    target_character_index, injection_character):
+def CBC_bit_flipper(
+    prefix_bytes,
+    input_butes,
+    ciphertext,
+    block_size,
+    target_character_index,
+    injection_character,
+):
 
     prefix_bytes_length = len(prefix_bytes)
 
@@ -129,22 +139,21 @@ def CBC_bit_flipper(prefix_bytes, input_butes, ciphertext, block_size,
     target_character_decrypted = input_butes[target_character_index]
 
     # Find flip inducing character (1 block before target).
-    flip_inducing_character_index = prefix_bytes_length - block_size + target_character_index
+    flip_inducing_character_index = (
+        prefix_bytes_length - block_size + target_character_index
+    )
     flip_inducing_character = prefix_bytes[flip_inducing_character_index]
 
-    encrypted_flip_inducing_character = ciphertext[
-        flip_inducing_character_index]
+    encrypted_flip_inducing_character = ciphertext[flip_inducing_character_index]
 
     # Replace the target character with the injection character.
-    block_cipher_decryption_byte = encrypted_flip_inducing_character ^ target_character_decrypted
+    block_cipher_decryption_byte = (
+        encrypted_flip_inducing_character ^ target_character_decrypted
+    )
     replacement_byte = block_cipher_decryption_byte ^ ord(injection_character)
 
-    print(
-        f"Flip target character decrypted : {bytes([target_character_decrypted])}"
-    )
-    print(
-        f"Flip inducing character         : {bytes([flip_inducing_character])}"
-    )
+    print(f"Flip target character decrypted : {bytes([target_character_decrypted])}")
+    print(f"Flip inducing character         : {bytes([flip_inducing_character])}")
     print(
         f"Encrypted result character      : {bytes([encrypted_flip_inducing_character])}"
     )
@@ -190,8 +199,8 @@ class text_scorer:
 
     expected_frequencies = [row[1] for row in char_frequencies]
     letter_ascii_index = list(range(97, 123))
-    non_alphabet_chars = re.compile(b'[^a-zA-Z]+')
-    desireable_chars = re.compile(b'''[\w\s,.'!-"\(\)\&%@#~-]''')
+    non_alphabet_chars = re.compile(b"[^a-zA-Z]+")
+    desireable_chars = re.compile(b"""[\w\s,.'!-"\(\)\&%@#~-]""")
 
     def __init__(self, byte_array):
         self.byte_array = byte_array
@@ -201,14 +210,13 @@ class text_scorer:
 
         # ---Prescreen---
         # Check for high letter proportion.
-        letter_instances = self.non_alphabet_chars.sub(b'', self.byte_array)
+        letter_instances = self.non_alphabet_chars.sub(b"", self.byte_array)
 
         if (sum(letter_instances) / self.total_chars) < 0.8:
             return 0
 
         # Check for low abnormal character proportion.
-        abnormal_char_instances = self.desireable_chars.sub(
-            b'', self.byte_array)
+        abnormal_char_instances = self.desireable_chars.sub(b"", self.byte_array)
 
         if 0.2 < (sum(abnormal_char_instances) / self.total_chars):
             return 0
@@ -218,8 +226,7 @@ class text_scorer:
         # Count letter instances independent of case.
         case_independent_letters = Counter(letter_instances.lower())
         case_independent_letter_instances = [
-            case_independent_letters.get(char, 0)
-            for char in self.letter_ascii_index
+            case_independent_letters.get(char, 0) for char in self.letter_ascii_index
         ]
 
         # Normalise letter instances.
@@ -229,5 +236,6 @@ class text_scorer:
         ]
 
         # Return goodness of fit.
-        return chisquare(case_independent_letter_frequencies,
-                         self.expected_frequencies)[1]
+        return chisquare(
+            case_independent_letter_frequencies, self.expected_frequencies
+        )[1]
