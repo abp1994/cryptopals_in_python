@@ -42,18 +42,20 @@ def find_key_size(max_key_size, data):
 
     for keysize in range(1, max_key_size + 1):
         normalised_edit_distance = np.zeros([samples])
-        for pair in range(samples):
+        for pair_index in range(samples):
 
             # Take adjacent keysize size blocks.
-            startIndex = (2 * pair) * keysize
-            middleIndex = (2 * pair + 1) * keysize
-            endIndex = (2 * pair + 2) * keysize
+            startIndex = (2 * pair_index) * keysize
+            middleIndex = (2 * pair_index + 1) * keysize
+            endIndex = (2 * pair_index + 2) * keysize
 
             ciphertext = data[startIndex:middleIndex]
             key = data[middleIndex:endIndex]
 
             # Calculate normalised edit distance.
-            normalised_edit_distance[pair] = edit_distance(ciphertext, key) / keysize
+            normalised_edit_distance[pair_index] = (
+                edit_distance(ciphertext, key) / keysize
+            )
 
         # Store average edit distance for keysize.
         results.append([np.average(normalised_edit_distance), keysize])
