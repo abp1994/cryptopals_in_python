@@ -24,7 +24,8 @@ class Set1:
 
         plaintext_hex = (
             "49276d206b696c6c696e6720796f757220627261696e206c696b65"
-            "206120706f69736f6e6f7573206d757368726f6f6d")
+            "206120706f69736f6e6f7573206d757368726f6f6d"
+        )
         plaintext = bytes.fromhex(plaintext_hex)
         plaintext_b64 = b64encode(plaintext)
 
@@ -53,8 +54,8 @@ class Set1:
         print("\n-- Challenge 3 - Single-byte XOR cipher --")
 
         ciphertext_hex = (
-            "1b37373331363f78151b7f2b783431333d78397828372d363c7837"
-            "3e783a393b3736")
+            "1b37373331363f78151b7f2b783431333d78397828372d363c7837" "3e783a393b3736"
+        )
         ciphertext = bytes.fromhex(ciphertext_hex)
         score, byte = bo.crack_single_byte_xor(ciphertext)
         plaintext = bo.single_byte_xor(byte, ciphertext)
@@ -92,15 +93,17 @@ class Set1:
     def challenge_5():
         print("\n-- Challenge 5 - Implement repeating-key XOR --")
 
-        plaintext = encode("Burning 'em, if you ain't quick and nimble\n"
-                           "I go crazy when I hear a cymbal")
+        plaintext = encode(
+            "Burning 'em, if you ain't quick and nimble\n"
+            "I go crazy when I hear a cymbal"
+        )
         key = encode("ICE")
         ciphertext = bo.repeating_key_xor(plaintext, key)
 
         print(f"Key                                : {decode(key)}")
         print(f"Plaintext                          : \n{decode(plaintext)}")
         print(f"Repeating key encrypt (hex encode) : {ciphertext.hex()}")
-        return (ciphertext.hex())
+        return ciphertext.hex()
 
     @staticmethod
     def challenge_6():
@@ -169,8 +172,9 @@ class Set2:
         size = 20
         plaintext_padded = bo.pad(size, plaintext)
 
-        print(f"{plaintext} padded to {size} bytes using PKCS#7 : "
-              f"{plaintext_padded}")
+        print(
+            f"{plaintext} padded to {size} bytes using PKCS#7 : " f"{plaintext_padded}"
+        )
         return plaintext_padded
 
     @staticmethod
@@ -222,8 +226,7 @@ class Set2:
 
     @staticmethod
     def challenge_12():
-        print(f"\n-- Challenge 12 -"
-              "Byte-at-a-time ECB decryption (Simple) --")
+        print(f"\n-- Challenge 12 -" "Byte-at-a-time ECB decryption (Simple) --")
 
         oracle = ocl.C12()
         profile = ocl.Profiler(oracle)
@@ -236,8 +239,7 @@ class Set2:
         print(f"Detected initial pad size  : {profile.initial_pad_size}")
 
         decryption = b""
-        data_size_in_blocks = int(
-            len(oracle.encrypt(b"")) / profile.block_size)
+        data_size_in_blocks = int(len(oracle.encrypt(b"")) / profile.block_size)
 
         # For all blocks in the data.
         for block_index in range(data_size_in_blocks):
@@ -247,17 +249,20 @@ class Set2:
             # For all byte positions along the block (15->0).
             for byte_index in reversed(range(profile.block_size)):
                 buffer = b"Z" * byte_index + decryption
-                model_block = oracle.encrypt(
-                    b"Z" *
-                    (byte_index))[block_start_byte_index:block_end_byte_index]
+                model_block = oracle.encrypt(b"Z" * (byte_index))[
+                    block_start_byte_index:block_end_byte_index
+                ]
 
                 # Test all possible characters against model_block.
                 for char in range(256):
                     byte = bytes([char])
                     # If character matched add it to the decryption.
-                    if model_block == oracle.encrypt(
-                            buffer +
-                            byte)[block_start_byte_index:block_end_byte_index]:
+                    if (
+                        model_block
+                        == oracle.encrypt(buffer + byte)[
+                            block_start_byte_index:block_end_byte_index
+                        ]
+                    ):
                         decryption = b"".join([decryption, byte])
                         break
         plaintext = bo.depad(decryption)
@@ -338,7 +343,8 @@ class Set2:
         print(f"Position of block start      : {position}")
 
         bytes_to_add = position - len(base_email)
-        if bytes_to_add < 0: bytes_to_add += 16
+        if bytes_to_add < 0:
+            bytes_to_add += 16
         block_end_email = ("e" * bytes_to_add) + base_email
 
         print(f"Bytes to add to email        : {bytes_to_add}")
@@ -355,10 +361,8 @@ class Set2:
         print(f"new ending decrypted         : {decrypted_cut}")
 
         attacker_encrypted_profile = crop + cut
-        attacker_decrypted_profile = oracle.decrypt_profile(
-            attacker_encrypted_profile)
-        attacker_profile = oracle.unpack_profile(
-            bo.depad(attacker_decrypted_profile))
+        attacker_decrypted_profile = oracle.decrypt_profile(attacker_encrypted_profile)
+        attacker_profile = oracle.unpack_profile(bo.depad(attacker_decrypted_profile))
 
         print(f"Attacker encrypted profile   : {attacker_encrypted_profile}")
         print(f"Attacker decrypted profile   : {attacker_decrypted_profile}")
@@ -380,23 +384,24 @@ class Set2:
         print(f"Detected input byte index  : {profile.input_byte_index}")
 
         # Create an input that fills the current block, by using 1 to block_size bytes.
-        bytes_to_add = profile.block_size - (profile.input_byte_index %
-                                             profile.block_size)
+        bytes_to_add = profile.block_size - (
+            profile.input_byte_index % profile.block_size
+        )
         block_end_input = b"Z" * bytes_to_add
 
         print(f"Bytes to add               : {bytes_to_add}")
         print(f"Input ending block         : {block_end_input}")
 
         decryption = b""
-        data_size_in_blocks = int(
-            len(oracle.encrypt(b"")) / profile.block_size)
+        data_size_in_blocks = int(len(oracle.encrypt(b"")) / profile.block_size)
 
         print(f"Size of output             : {profile.model_size}")
         print(f"Size of output in blocks   : {data_size_in_blocks}")
 
         # For all blocks in the data after the prefix blocks.
-        for block_index in range(profile.input_block_index + 1,
-                                 data_size_in_blocks + 1):
+        for block_index in range(
+            profile.input_block_index + 1, data_size_in_blocks + 1
+        ):
             block_start_byte_index = block_index * profile.block_size
             block_end_byte_index = block_start_byte_index + profile.block_size
 
@@ -411,9 +416,12 @@ class Set2:
                 for char in range(256):
                     byte = bytes([char])
                     # If character matched add it to the decryption.
-                    if model_block == oracle.encrypt(
-                            buffer +
-                            byte)[block_start_byte_index:block_end_byte_index]:
+                    if (
+                        model_block
+                        == oracle.encrypt(buffer + byte)[
+                            block_start_byte_index:block_end_byte_index
+                        ]
+                    ):
                         decryption = b"".join([decryption, byte])
                         break
 
@@ -457,20 +465,22 @@ class Set2:
         ciphertext = oracle.encrypt(crack_input)
 
         # Bit flip desired characters at desired index.
-        bit_flipped_ciphertext_1 = bo.CBC_bit_flipper(known_prefix,
-                                                      crack_input, ciphertext,
-                                                      profile.block_size, 0,
-                                                      ";")
+        bit_flipped_ciphertext_1 = bo.CBC_bit_flipper(
+            known_prefix, crack_input, ciphertext, profile.block_size, 0, ";"
+        )
 
         bit_flipped_ciphertext_2 = bo.CBC_bit_flipper(
-            known_prefix, crack_input, bit_flipped_ciphertext_1,
-            profile.block_size, 6, "=")
+            known_prefix,
+            crack_input,
+            bit_flipped_ciphertext_1,
+            profile.block_size,
+            6,
+            "=",
+        )
 
         # Check decryption.
         print(f"Decrypted data : \n{oracle.decrypt(bit_flipped_ciphertext_2)}")
-        print(
-            f"Admin property present : {oracle.is_admin(bit_flipped_ciphertext_2)}"
-        )
+        print(f"Admin property present : {oracle.is_admin(bit_flipped_ciphertext_2)}")
         return oracle.is_admin(bit_flipped_ciphertext_2)
 
 
@@ -496,11 +506,11 @@ class Set3:
         print(f"Revealed data length : {len(bo.depad(oracle.reveal()))}")
 
         # Find the index of the last byte of the last but 1 block (Byte that affects padding byte after encryption).
-        '''injection_byte_index = output_size - block_size - 1
-        print(f"Injection byte index : {injection_byte_index}")'''
+        """injection_byte_index = output_size - block_size - 1
+        print(f"Injection byte index : {injection_byte_index}")"""
 
-        #decryption = b""
-        #expected_pad = 1
+        # decryption = b""
+        # expected_pad = 1
 
         # Function that submits all possible values for specific byte index in a ciphertext and returns byte that oracle is able to depad.
         # a bit is then flipped and depading is rerun to check that the padding is of a known value.
@@ -510,18 +520,18 @@ class Set3:
             for byte in range(255):
                 crack_ciphertext[index] = byte
 
-                if (oracle.depad_possible(crack_ciphertext, iv)):
+                if oracle.depad_possible(crack_ciphertext, iv):
 
                     # Check padding is of correct size by flipping a bit that should not affect the pad.
                     # Only required if expected pad is 1.
                     if expected_pad == 1:
                         check_crack_ciphertext = crack_ciphertext[:]
                         # Flip single bit by XORing with 1.
-                        check_crack_ciphertext[
-                            index - expected_pad] = check_crack_ciphertext[
-                                index - expected_pad] ^ 1
+                        check_crack_ciphertext[index - expected_pad] = (
+                            check_crack_ciphertext[index - expected_pad] ^ 1
+                        )
                         # Check depad still possible.
-                        if (oracle.depad_possible(check_crack_ciphertext, iv)):
+                        if oracle.depad_possible(check_crack_ciphertext, iv):
                             break
                     else:
                         break
@@ -537,8 +547,10 @@ class Set3:
             block_array.insert(0, iv)
 
             # Create block pairs for processing.
-            block_pairs = [(block_array[i], block_array[i + 1])
-                           for i in (range(len(block_array) - 1))]
+            block_pairs = [
+                (block_array[i], block_array[i + 1])
+                for i in (range(len(block_array) - 1))
+            ]
 
             for penultimate_block, end_block in reversed(block_pairs):
                 decryption = b""
@@ -551,28 +563,36 @@ class Set3:
 
                     # Find the valid pad byte.
                     valid_pad_byte = single_byte_pad_crack(
-                        crack_ciphertext, iv, byte_index, expected_pad)
+                        crack_ciphertext, iv, byte_index, expected_pad
+                    )
 
                     # Find the plaintext byte using the valid pad byte.
-                    decrypted_byte = expected_pad ^ penultimate_block[
-                        byte_index] ^ valid_pad_byte
+                    decrypted_byte = (
+                        expected_pad ^ penultimate_block[byte_index] ^ valid_pad_byte
+                    )
 
                     # Prepend decrypted byte to decryption.
-                    decryption = b"".join(
-                        [bytes([decrypted_byte]), decryption])
+                    decryption = b"".join([bytes([decrypted_byte]), decryption])
 
                     # Update crack block by setting all unknown pad bytes to bytes that create expected pad when decrypted.
-                    for index in range(block_size - 1,
-                                       block_size - expected_pad - 1, -1):
+                    for index in range(
+                        block_size - 1, block_size - expected_pad - 1, -1
+                    ):
                         crack_block_prefix = crack_block[:index]
-                        crack_block_suffix = crack_block[index + 1:]
-                        new_crack_byte = penultimate_block[index] ^ decryption[
-                            -(block_size - index)] ^ expected_pad + 1
+                        crack_block_suffix = crack_block[index + 1 :]
+                        new_crack_byte = (
+                            penultimate_block[index]
+                            ^ decryption[-(block_size - index)]
+                            ^ expected_pad + 1
+                        )
 
-                        crack_block = b"".join([
-                            crack_block_prefix,
-                            bytes([new_crack_byte]), crack_block_suffix
-                        ])
+                        crack_block = b"".join(
+                            [
+                                crack_block_prefix,
+                                bytes([new_crack_byte]),
+                                crack_block_suffix,
+                            ]
+                        )
 
                 # Update plaintext by prepending decrypted block.
                 plaintext = b"".join([decryption, plaintext])
@@ -583,7 +603,7 @@ class Set3:
             return plaintext
 
         plaintext = padding_oracle_attack(ciphertext, block_size, iv)
-        print(f'Plaintext     : {plaintext}')
+        print(f"Plaintext     : {plaintext}")
         if plaintext == bo.depad(oracle.reveal()):
             print("---------------Success------------------")
         else:
@@ -597,7 +617,7 @@ class Set3:
         )
 
         key = encode("YELLOW SUBMARINE")
-        nonce = b'\x00' * 8
+        nonce = b"\x00" * 8
 
         cipher = ocl.AESCTR(nonce, key)
         plaintext = cipher.decrypt(ciphertext)
@@ -608,7 +628,7 @@ class Set3:
 
         secret = encode("Top Secret info Here -blah blah blah-")
         key = encode("PASSWORDPASSWORD")
-        nonce = b'\x00\x01\x02\x03\x04\x05\x06\x07'
+        nonce = b"\x00\x01\x02\x03\x04\x05\x06\x07"
         cipher2 = ocl.AESCTR(nonce, key)
 
         cipher_chunk_1 = cipher2.encrypt(secret[:7])
@@ -667,13 +687,13 @@ def main():
     startTime = time.time()
 
     # Profiling stat options.
-    '''# function_stats('set_1.challenge_4()')
-    print(sys.path)'''
+    """# function_stats('set_1.challenge_4()')
+    print(sys.path)"""
 
     run_challenges()
 
-    executionTime = (time.time() - startTime)
-    print(f'\nExecution time in seconds: {executionTime}')
+    executionTime = time.time() - startTime
+    print(f"\nExecution time in seconds: {executionTime}")
 
 
 if __name__ == "__main__":
