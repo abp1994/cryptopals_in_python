@@ -130,6 +130,7 @@ class Set1:
         print(f"Highest score         : {score}")
         print(f"Corresponding Key     : {decode(key)}")
         print(f"Secret                : \n{decode(secret[:90])}...")
+
         return {"key": key, "secret": decode(secret)}
 
     @staticmethod
@@ -138,10 +139,11 @@ class Set1:
 
         key = encode("YELLOW SUBMARINE")
         ciphertext = b64decode(ut.import_data("data_S1C7.txt"))
-        plaintext = ocl.AESECB(key).decrypt(ciphertext)
+        plaintext = bo.depad(ocl.AESECB(key).decrypt(ciphertext))
 
         print(f"Key       : {decode(key)}")
         print(f"Plaintext : \n{decode(plaintext[:90])}...")
+        return decode(plaintext)
 
     @staticmethod
     def challenge_8():

@@ -42,6 +42,13 @@ class TestCryptopals_set1(unittest.TestCase):
         self.assertEqual(result["key"], b"Terminator X: Bring the noise")
         self.assertEqual(result["secret"], secret)
 
+    def test_C7(self):
+        secret = ut.import_data("test_data_S1C7.txt")
+        self.assertEqual(c.Set1.challenge_7(), secret)
+
+    def test_C8(self):
+        pass
+
 
 class TestCryptopals_set2(unittest.TestCase):
     def test_C9(self):
