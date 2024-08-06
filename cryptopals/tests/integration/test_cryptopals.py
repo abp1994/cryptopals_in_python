@@ -33,6 +33,10 @@ class TestCryptopals_set1(unittest.TestCase):
             "333a653e2b2027630c692b20283165286326302e27282f",
         )
 
+    def test_C6(self):
+        result = c.Set1.challenge_6()
+        self.assertEqual(result["key"], b"Terminator X: Bring the noise")
+
 
 class TestCryptopals_set2(unittest.TestCase):
     def test_C9(self):
