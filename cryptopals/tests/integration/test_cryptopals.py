@@ -47,7 +47,7 @@ class TestCryptopals_set1(unittest.TestCase):
         self.assertEqual(c.Set1.challenge_7(), secret)
 
     def test_C8(self):
-        pass
+        self.assertEqual(c.Set1.challenge_8(), 132)
 
 
 class TestCryptopals_set2(unittest.TestCase):
