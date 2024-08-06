@@ -87,7 +87,7 @@ class Set1:
         print(f"Corresponding line               : {line_index}")
         print(f"Corresponding key                : {decode(byte)}")
         print(f"Decrypted plaintext              : {decode(plaintext)}")
-        return decode(plaintext)
+        return {"key": byte, "line_index": line_index, "plaintext": plaintext}
 
     @staticmethod
     def challenge_5():

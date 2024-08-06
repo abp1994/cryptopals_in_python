@@ -16,6 +16,12 @@ class TestCryptopals_set1(unittest.TestCase):
     def test_C2(self):
         self.assertEqual(c.Set1.challenge_2(), "746865206b696420646f6e277420706c6179")
 
+    def test_C4(self):
+        result = c.Set1.challenge_4()
+        self.assertEqual(result["key"], b"5")
+        self.assertEqual(result["line_index"], 170)
+        self.assertEqual(result["plaintext"], b"Now that the party is jumping\n")
+
     def test_C5(self):
         self.assertEqual(
             c.Set1.challenge_5(),
