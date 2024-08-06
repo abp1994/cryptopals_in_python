@@ -64,7 +64,7 @@ class Set1:
         print(f"Highest frequency analysis score : {score}")
         print(f"Corresponding Key                : {decode(byte)}")
         print(f"Decrypted plaintext              : {decode(plaintext)}")
-        return decode(plaintext)
+        return plaintext
 
     @staticmethod
     def challenge_4():

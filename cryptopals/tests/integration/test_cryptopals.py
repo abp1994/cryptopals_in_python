@@ -16,6 +16,9 @@ class TestCryptopals_set1(unittest.TestCase):
     def test_C2(self):
         self.assertEqual(c.Set1.challenge_2(), "746865206b696420646f6e277420706c6179")
 
+    def test_C3(self):
+        self.assertEqual(c.Set1.challenge_3(), b"Cooking MC's like a pound of bacon")
+
     def test_C4(self):
         result = c.Set1.challenge_4()
         self.assertEqual(result["key"], b"5")
