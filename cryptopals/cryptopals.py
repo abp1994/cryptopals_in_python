@@ -218,7 +218,7 @@ class Set2:
         print(f"Random AES key : {bo.random_AES_key()}")
         print(f"Oracle modes   : {oracle_modes}")
         print(f"Detected modes : {detected_modes}")
-        return oracle_modes, detected_modes
+        return {"modes": oracle_modes, "detected_modes": detected_modes}
 
     @staticmethod
     def challenge_12():

@@ -37,13 +37,13 @@ class TestCryptopals_set1(unittest.TestCase):
 
     def test_C6(self):
         result = c.Set1.challenge_6()
-        secret = ut.import_data("test_data_S1C6.txt")
+        secret = ut.import_data("data_secret_lyrics.txt")
 
         self.assertEqual(result["key"], b"Terminator X: Bring the noise")
         self.assertEqual(result["secret"], secret)
 
     def test_C7(self):
-        secret = ut.import_data("test_data_S1C7.txt")
+        secret = ut.import_data("data_secret_lyrics.txt")
         self.assertEqual(c.Set1.challenge_7(), secret)
 
     def test_C8(self):
@@ -53,6 +53,15 @@ class TestCryptopals_set1(unittest.TestCase):
 class TestCryptopals_set2(unittest.TestCase):
     def test_C9(self):
         self.assertEqual(c.Set2.challenge_9(), b"YELLOW SUBMARINE\x04\x04\x04\x04")
+
+    def test_C10(self):
+        secret = ut.import_data("data_secret_lyrics.txt")
+        self.assertEqual(c.Set2.challenge_10(), secret)
+
+    def test_C11(self):
+        result = c.Set2.challenge_11()
+        for mode, detected_mode in zip(result["modes"], result["detected_modes"]):
+            self.assertEqual(mode, detected_mode)
 
     def test_C13(self):
         self.assertEqual(c.Set2.challenge_13()["role"], "admin")
