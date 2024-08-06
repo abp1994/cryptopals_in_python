@@ -1,13 +1,7 @@
-import base64
 import sys
 import time
 from base64 import b64decode, b64encode
-from logging import raiseExceptions
 from pathlib import Path
-from pydoc import plain
-from random import random
-
-from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 
 sys.path.append(str(Path(__file__).parent.resolve()))
 
@@ -136,7 +130,8 @@ class Set1:
         print(f"Highest score         : {score}")
         print(f"Corresponding Key     : {decode(key)}")
         print(f"Secret                : \n{decode(secret[:90])}...")
-        return decode(secret)
+        print(decode(secret))
+        return {"key": key, "secret": secret}
 
     @staticmethod
     def challenge_7():
