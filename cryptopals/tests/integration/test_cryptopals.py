@@ -3,6 +3,8 @@ import unittest
 from pathlib import Path
 
 sys.path.append(str(Path(__file__).parents[2].resolve()))
+import utils as ut
+
 import cryptopals.cryptopals as c
 
 
@@ -35,7 +37,10 @@ class TestCryptopals_set1(unittest.TestCase):
 
     def test_C6(self):
         result = c.Set1.challenge_6()
+        secret = ut.import_data("test_data_S1C6.txt")
+
         self.assertEqual(result["key"], b"Terminator X: Bring the noise")
+        self.assertEqual(result["secret"], secret)
 
 
 class TestCryptopals_set2(unittest.TestCase):

@@ -130,8 +130,7 @@ class Set1:
         print(f"Highest score         : {score}")
         print(f"Corresponding Key     : {decode(key)}")
         print(f"Secret                : \n{decode(secret[:90])}...")
-        print(decode(secret))
-        return {"key": key, "secret": secret}
+        return {"key": key, "secret": decode(secret)}
 
     @staticmethod
     def challenge_7():
