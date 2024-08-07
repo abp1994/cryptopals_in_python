@@ -602,6 +602,7 @@ class Set3:
         print(f"Plaintext     : {plaintext}")
         if plaintext == bo.depad(oracle.reveal()):
             print("---------------Success------------------")
+            return True
         else:
             print("XXXXXXXXXXXXXXXXFailureXXXXXXXXXXXXXXXX")
             raise Exception("C17 Failed")

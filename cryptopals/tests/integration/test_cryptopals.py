@@ -81,5 +81,10 @@ class TestCryptopals_set2(unittest.TestCase):
         self.assertTrue(c.Set2.challenge_16())
 
 
+class TestCryptopals_set3(unittest.TestCase):
+    def test_C17(self):
+        self.assertTrue(c.Set3.challenge_17())
+
+
 if __name__ == "__main__":
     unittest.main()
