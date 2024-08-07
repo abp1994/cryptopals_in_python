@@ -64,16 +64,18 @@ class TestCryptopals_set2(unittest.TestCase):
             self.assertEqual(mode, detected_mode)
 
     def test_C12(self):
-        self.assertEqual(
-            c.Set2.challenge_12(),
-            "Rollin' in my 5.0\n"
-            "With my rag-top down so my hair can blow\n"
-            "The girlies on standby waving just to say hi\n"
-            "Did you stop? No, I just drove by\n",
-        )
+        secret = ut.import_data("Ice_Ice_Baby_Snippet.txt")
+        self.assertEqual(c.Set2.challenge_12(), secret)
 
     def test_C13(self):
         self.assertEqual(c.Set2.challenge_13()["role"], "admin")
+
+    def test_C14(self):
+        secret = ut.import_data("Ice_Ice_Baby_Snippet.txt")
+        self.assertEqual(c.Set2.challenge_14(), secret)
+
+    def test_C15(self):
+        pass
 
     def test_C16(self):
         self.assertTrue(c.Set2.challenge_16())
