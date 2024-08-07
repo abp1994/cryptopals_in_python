@@ -37,13 +37,13 @@ class TestCryptopals_set1(unittest.TestCase):
 
     def test_C6(self):
         result = c.Set1.challenge_6()
-        secret = ut.import_data("data_secret_lyrics.txt")
+        secret = ut.import_data("Play_That_Funky_Music_Snippet.txt")
 
         self.assertEqual(result["key"], b"Terminator X: Bring the noise")
         self.assertEqual(result["secret"], secret)
 
     def test_C7(self):
-        secret = ut.import_data("data_secret_lyrics.txt")
+        secret = ut.import_data("Play_That_Funky_Music_Snippet.txt")
         self.assertEqual(c.Set1.challenge_7(), secret)
 
     def test_C8(self):
@@ -55,13 +55,22 @@ class TestCryptopals_set2(unittest.TestCase):
         self.assertEqual(c.Set2.challenge_9(), b"YELLOW SUBMARINE\x04\x04\x04\x04")
 
     def test_C10(self):
-        secret = ut.import_data("data_secret_lyrics.txt")
+        secret = ut.import_data("Play_That_Funky_Music_Snippet.txt")
         self.assertEqual(c.Set2.challenge_10(), secret)
 
     def test_C11(self):
         result = c.Set2.challenge_11()
         for mode, detected_mode in zip(result["modes"], result["detected_modes"]):
             self.assertEqual(mode, detected_mode)
+
+    def test_C12(self):
+        self.assertEqual(
+            c.Set2.challenge_12(),
+            "Rollin' in my 5.0\n"
+            "With my rag-top down so my hair can blow\n"
+            "The girlies on standby waving just to say hi\n"
+            "Did you stop? No, I just drove by\n",
+        )
 
     def test_C13(self):
         self.assertEqual(c.Set2.challenge_13()["role"], "admin")
