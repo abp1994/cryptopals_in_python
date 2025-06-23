@@ -12,7 +12,7 @@ def enable_print():
 
 
 def disable_print():
-    sys.stdout = open(os.devnull, 'w')
+    sys.stdout = open(os.devnull, "w")
 
 
 def import_data(file_name):
@@ -26,7 +26,7 @@ def encode(text):
 
 
 def decode(byte_array):
-    return byte_array.decode("utf-8", errors='ignore')
+    return byte_array.decode("utf-8", errors="ignore")
 
 
 def function_stats(function):

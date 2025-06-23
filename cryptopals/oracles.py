@@ -16,6 +16,7 @@ from utils import decode, encode
 
 
 class AESECB:
+
     def __init__(self, key):
         self.cipher = Cipher(algorithms.AES(key),
                              modes.ECB(),
@@ -31,6 +32,7 @@ class AESECB:
 
 
 class AESCBC:
+
     def __init__(self, iv, key):
         self.iv = iv
         self.key = key
@@ -125,15 +127,15 @@ class AESCTR:
 
 
 class C11:
+
     def __init__(self):
         self.mode = secrets.choice(["ECB", "CBC"])
         self.key = bo.random_AES_key()
         self.iv = secrets.token_bytes(16)
 
     def encrypt(self, data):
-        data = secrets.token_bytes(
-            secrets.randbelow(5)) + data + secrets.token_bytes(
-                secrets.randbelow(5))
+        data = (secrets.token_bytes(secrets.randbelow(5)) + data +
+                secrets.token_bytes(secrets.randbelow(5)))
         data_padded = bo.pad(16, data)
         if self.mode == "ECB":
             result = AESECB(self.key).encrypt(data_padded)
@@ -143,6 +145,7 @@ class C11:
 
 
 class C12:
+
     def __init__(self):
         self.key = bo.random_AES_key()
         self.secret = b64decode(ut.import_data("data_S2C12.txt"))
@@ -153,6 +156,7 @@ class C12:
 
 
 class C13:
+
     @staticmethod
     def create_profile(email):
         data = C13.parse_profile(email)
@@ -178,6 +182,7 @@ class C13:
 
 
 class C14:
+
     def __init__(self):
         self.random_prefix = secrets.token_bytes(secrets.randbelow(64) + 1)
         self.oracle = C12()
@@ -188,6 +193,7 @@ class C14:
 
 
 class C16:
+
     def __init__(self):
         self.iv = bo.random_AES_key()
         self.key = bo.random_AES_key()
@@ -204,7 +210,7 @@ class C16:
 
     def decrypt(self, bytes):
         data = decode(AESCBC(self.iv, self.key).decrypt(bytes))
-        return [tuple(pair.split('=', 1)) for pair in data.split(';')]
+        return [tuple(pair.split("=", 1)) for pair in data.split(";")]
 
     def is_admin(self, bytes):
         decrypted_fields = self.decrypt(bytes)
@@ -212,6 +218,7 @@ class C16:
 
 
 class C17:
+
     def __init__(self):
         self.iv = bo.random_AES_key()
         self.key = bo.random_AES_key()
@@ -242,6 +249,7 @@ class C17:
 
 # Functions used to profile an encryption oracle.
 class Profiler:
+
     def __init__(self, oracle):
         self.oracle = oracle
         self.model_output = oracle.encrypt(b"")
@@ -298,11 +306,12 @@ class Profiler:
         duplicate_found, duplicate_block_index = bo.detect_adjacent_duplicate_blocks(
             self.oracle.encrypt(bytestring), block_size)
 
-        while (not (duplicate_found)):
+        while not (duplicate_found):
 
             bytestring = b"".join([bytestring, b"Z"])
-            duplicate_found, duplicate_block_index = bo.detect_adjacent_duplicate_blocks(
-                self.oracle.encrypt(bytestring), block_size)
+            duplicate_found, duplicate_block_index = (
+                bo.detect_adjacent_duplicate_blocks(
+                    self.oracle.encrypt(bytestring), block_size))
 
             if len(bytestring) > (3 * block_size):
                 raise StopIteration("Indeterminate input byte index")

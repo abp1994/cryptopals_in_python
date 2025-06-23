@@ -7,6 +7,7 @@ import byte_operations as bo
 
 
 class Testbyte_operations(unittest.TestCase):
+
     def test_xor(self):
         self.assertEqual(bo.xor(b"abcde", b"abcde"), b"\x00\x00\x00\x00\x00")
         self.assertEqual(bo.xor(b"\x00\x01\x01", b"\x00\x00\x01"),
