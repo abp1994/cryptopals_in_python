@@ -88,8 +88,7 @@ class Set1:
         print("\n-- Challenge 5 - Implement repeating-key XOR --")
 
         plaintext = encode(
-            "Burning 'em, if you ain't quick and nimble\n"
-            "I go crazy when I hear a cymbal"
+            "Burning 'em, if you ain't quick and nimble\nI go crazy when I hear a cymbal"
         )
         key = encode("ICE")
         ciphertext = bo.repeating_key_xor(plaintext, key)
@@ -508,7 +507,9 @@ class Set3:
 
         # Function that submits all possible values for specific byte index in a ciphertext and returns byte that oracle is able to depad.
         # a bit is then flipped and depading is rerun to check that the padding is of a known value.
-        def single_byte_pad_crack(ciphertext, iv, index, expected_pad):
+        def single_byte_pad_crack(
+            ciphertext: bytes, iv: bytes, index: int, expected_pad
+        ):
             crack_ciphertext = bytearray(ciphertext)
             byte = None
             for byte in range(255):
@@ -530,7 +531,7 @@ class Set3:
                         break
             return byte
 
-        def padding_oracle_attack(ciphertext, block_size, iv):
+        def padding_oracle_attack(ciphertext, block_size: int, iv: bytes):
             plaintext = b""
 
             # Divide ciphertext into blocks.
