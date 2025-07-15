@@ -10,7 +10,7 @@ def xor(a, b):
     return bytes(a_byte ^ b_byte for a_byte, b_byte in zip(a, b))
 
 
-#Calculate the bitwise Hamming Distance.
+# Calculate the bitwise Hamming Distance.
 def edit_distance(a, b):
     return sum([bin(byte).count("1") for byte in xor(a, b)])
 
@@ -20,6 +20,7 @@ def single_byte_xor(byte, byte_array):
 
 
 def crack_single_byte_xor(ciphertext):
+
     def attempt_crack():
         for char in range(256):
             byte = bytes([char])
@@ -30,6 +31,7 @@ def crack_single_byte_xor(ciphertext):
 
 
 def repeating_key_xor(ciphertext, key):
+
     def nth_xor(n, byte):
         return byte ^ key[n % len(key)]
 
@@ -38,7 +40,7 @@ def repeating_key_xor(ciphertext, key):
 
 def find_key_size(max_size, data):
     samples = 10
-    normalised_edit_distance = np.zeros([samples])
+    edit_distance_norm = np.zeros([samples])
     results = []
 
     for keysize in range(1, max_size):
@@ -49,11 +51,10 @@ def find_key_size(max_size, data):
             key = data[(2 * pair + 1) * keysize:(2 * pair + 2) * keysize]
 
             # Calculate normalised edit distance.
-            normalised_edit_distance[pair] = edit_distance(ciphertext,
-                                                           key) / keysize
+            edit_distance_norm[pair] = edit_distance(ciphertext, key) / keysize
 
         # Store average edit distance for keysize.
-        results.append([np.average(normalised_edit_distance), keysize])
+        results.append([np.average(edit_distance_norm), keysize])
     return [row[1] for row in sorted(results)]
 
 
@@ -120,39 +121,41 @@ def detect_adjacent_duplicate_blocks(data, block_size):
     return duplicate_found, duplicate_block_index
 
 
-def CBC_bit_flipper(prefix_bytes, input_butes, ciphertext, block_size,
-                    target_character_index, injection_character):
+def CBC_bit_flipper(
+    prefix_bytes,
+    input_butes,
+    ciphertext,
+    block_size,
+    target_char_index,
+    injection_char,
+):
 
     prefix_bytes_length = len(prefix_bytes)
 
     # Target character properties.
-    target_character_decrypted = input_butes[target_character_index]
+    target_char_decrypted = input_butes[target_char_index]
 
     # Find flip inducing character (1 block before target).
-    flip_inducing_character_index = prefix_bytes_length - block_size + target_character_index
-    flip_inducing_character = prefix_bytes[flip_inducing_character_index]
+    flip_trigger_index = prefix_bytes_length - block_size + target_char_index
+    flip_inducing_char = prefix_bytes[flip_trigger_index]
 
-    encrypted_flip_inducing_character = ciphertext[
-        flip_inducing_character_index]
+    encrypted_flip_inducing_char = ciphertext[flip_trigger_index]
 
     # Replace the target character with the injection character.
-    block_cipher_decryption_byte = encrypted_flip_inducing_character ^ target_character_decrypted
-    replacement_byte = block_cipher_decryption_byte ^ ord(injection_character)
+    block_cipher_decryption_byte = encrypted_flip_inducing_char ^ target_char_decrypted
+    replacement_byte = block_cipher_decryption_byte ^ ord(injection_char)
 
     print(
-        f"Flip target character decrypted : {bytes([target_character_decrypted])}"
-    )
+        f"Flip target character decrypted : {bytes([target_char_decrypted])}")
+    print(f"Flip inducing character         : {bytes([flip_inducing_char])}")
     print(
-        f"Flip inducing character         : {bytes([flip_inducing_character])}"
-    )
-    print(
-        f"Encrypted result character      : {bytes([encrypted_flip_inducing_character])}"
+        f"Encrypted result character      : {bytes([encrypted_flip_inducing_char])}"
     )
     print(f"Replacement character           : {bytes([replacement_byte])}")
 
     # Inject replacement character into ciphertext.
     bit_flipped_ciphertext = bytearray(ciphertext)
-    bit_flipped_ciphertext[flip_inducing_character_index] = replacement_byte
+    bit_flipped_ciphertext[flip_trigger_index] = replacement_byte
 
     return bytes(bit_flipped_ciphertext)
 
@@ -190,8 +193,8 @@ class text_scorer:
 
     expected_frequencies = [row[1] for row in char_frequencies]
     letter_ascii_index = list(range(97, 123))
-    non_alphabet_chars = re.compile(b'[^a-zA-Z]+')
-    desireable_chars = re.compile(b'''[\w\s,.'!-"\(\)\&%@#~-]''')
+    non_alphabet_chars = re.compile(b"[^a-zA-Z]+")
+    desireable_chars = re.compile(b"""[\w\s,.'!-"\(\)\&%@#~-]""")
 
     def __init__(self, byte_array):
         self.byte_array = byte_array
@@ -201,33 +204,33 @@ class text_scorer:
 
         # ---Prescreen---
         # Check for high letter proportion.
-        letter_instances = self.non_alphabet_chars.sub(b'', self.byte_array)
+        letter_count = self.non_alphabet_chars.sub(b"", self.byte_array)
 
-        if (sum(letter_instances) / self.total_chars) < 0.8:
+        if (sum(letter_count) / self.total_chars) < 0.8:
             return 0
 
         # Check for low abnormal character proportion.
-        abnormal_char_instances = self.desireable_chars.sub(
-            b'', self.byte_array)
+        abnormal_char_count = self.desireable_chars.sub(b"", self.byte_array)
 
-        if 0.2 < (sum(abnormal_char_instances) / self.total_chars):
+        if 0.2 < (sum(abnormal_char_count) / self.total_chars):
             return 0
 
         # ---Full scorer---
 
         # Count letter instances independent of case.
-        case_independent_letters = Counter(letter_instances.lower())
-        case_independent_letter_instances = [
+        case_independent_letters = Counter(letter_count.lower())
+        case_independent_letter_count = [
             case_independent_letters.get(char, 0)
             for char in self.letter_ascii_index
         ]
 
         # Normalise letter instances.
-        total = sum(case_independent_letter_instances)
+        total = sum(case_independent_letter_count)
         case_independent_letter_frequencies = [
-            instance / total for instance in case_independent_letter_instances
+            instance / total for instance in case_independent_letter_count
         ]
 
         # Return goodness of fit.
         return chisquare(case_independent_letter_frequencies,
-                         self.expected_frequencies)[1]
+                         self.expected_frequencies,
+                         sum_check=False)[1]
