@@ -21,11 +21,11 @@ def import_data(file_name: str):
         return f.read()
 
 
-def encode(text):
+def encode(text: str):
     return text.encode("utf-8")
 
 
-def decode(byte_array):
+def decode(byte_array: bytes):
     return byte_array.decode("utf-8", errors="ignore")
 
 

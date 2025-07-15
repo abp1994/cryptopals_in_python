@@ -1,26 +1,26 @@
 import re
 import secrets
 from collections import Counter
+from typing import final
 
 import numpy as np
 from scipy.stats import chisquare
 
 
-def xor(a, b):
+def xor(a: bytes, b: bytes):
     return bytes(a_byte ^ b_byte for a_byte, b_byte in zip(a, b))
 
 
 # Calculate the bitwise Hamming Distance.
-def edit_distance(a, b):
+def edit_distance(a: bytes, b: bytes):
     return sum([bin(byte).count("1") for byte in xor(a, b)])
 
 
-def single_byte_xor(byte, byte_array):
+def single_byte_xor(byte: bytes, byte_array: bytes):
     return xor(byte_array, byte * len(byte_array))
 
 
-def crack_single_byte_xor(ciphertext):
-
+def crack_single_byte_xor(ciphertext: bytes):
     def attempt_crack():
         for char in range(256):
             byte = bytes([char])
@@ -30,25 +30,23 @@ def crack_single_byte_xor(ciphertext):
     return max(attempt_crack())
 
 
-def repeating_key_xor(ciphertext, key):
-
-    def nth_xor(n, byte):
+def repeating_key_xor(ciphertext: bytes, key: bytes):
+    def nth_xor(n, byte: bytes):
         return byte ^ key[n % len(key)]
 
     return bytes([nth_xor(n, byte) for n, byte in enumerate(ciphertext)])
 
 
-def find_key_size(max_size, data):
+def find_key_size(max_size: int, data: bytes):
     samples = 10
     edit_distance_norm = np.zeros([samples])
     results = []
 
     for keysize in range(1, max_size):
         for pair in range(samples):
-
             # Take adjacent keysize size blocks.
-            ciphertext = data[(2 * pair) * keysize:(2 * pair + 1) * keysize]
-            key = data[(2 * pair + 1) * keysize:(2 * pair + 2) * keysize]
+            ciphertext = data[(2 * pair) * keysize : (2 * pair + 1) * keysize]
+            key = data[(2 * pair + 1) * keysize : (2 * pair + 2) * keysize]
 
             # Calculate normalised edit distance.
             edit_distance_norm[pair] = edit_distance(ciphertext, key) / keysize
@@ -58,8 +56,7 @@ def find_key_size(max_size, data):
     return [row[1] for row in sorted(results)]
 
 
-def key_finder(key_size, data):
-
+def key_finder(key_size: int, data: bytes):
     # Create list of rectangular size using key_size.
     lower_multiple = len(data) - (len(data) % key_size)
     data_array = np.frombuffer(data, dtype="uint8")[0:lower_multiple]
@@ -72,7 +69,7 @@ def key_finder(key_size, data):
     return b"".join([crack_single_byte_xor(item)[1] for item in output_list])
 
 
-def pad(block_size, data):
+def pad(block_size: int, data: bytes):
     # PKCS#7 padding.
     if (len(data) % block_size) == 0:
         data = b"".join([data, bytes([block_size]) * block_size])
@@ -82,7 +79,7 @@ def pad(block_size, data):
     return data
 
 
-def depad(data):
+def depad(data: bytes):
     # PKCS#7 depadding.
     pad_size = data[-1]
     if data[-pad_size:] != bytes([pad_size]) * pad_size:
@@ -90,10 +87,9 @@ def depad(data):
     return data[0:-pad_size]
 
 
-def blockify(ciphertext, block_size):
+def blockify(ciphertext: bytes, block_size: int):
     return [
-        ciphertext[i:i + block_size]
-        for i in range(0, len(ciphertext), block_size)
+        ciphertext[i : i + block_size] for i in range(0, len(ciphertext), block_size)
     ]
 
 
@@ -101,14 +97,13 @@ def random_AES_key():
     return secrets.token_bytes(16)
 
 
-def is_ecb_encrypted(data):
+def is_ecb_encrypted(data: bytes):
     array = np.frombuffer(data, dtype="uint8").reshape(-1, 16)
     duplicate_blocks = len(array) - len(np.unique(array, axis=0))
     return True if 0 < duplicate_blocks else False
 
 
-def detect_adjacent_duplicate_blocks(data, block_size):
-
+def detect_adjacent_duplicate_blocks(data: bytes, block_size: int):
     blocks = blockify(data, block_size)
     duplicate_found = False
     duplicate_block_index = 0
@@ -122,14 +117,13 @@ def detect_adjacent_duplicate_blocks(data, block_size):
 
 
 def CBC_bit_flipper(
-    prefix_bytes,
-    input_butes,
-    ciphertext,
-    block_size,
-    target_char_index,
-    injection_char,
+    prefix_bytes: bytes,
+    input_butes: bytes,
+    ciphertext: bytes,
+    block_size: int,
+    target_char_index: int,
+    injection_char: str,
 ):
-
     prefix_bytes_length = len(prefix_bytes)
 
     # Target character properties.
@@ -145,12 +139,9 @@ def CBC_bit_flipper(
     block_cipher_decryption_byte = encrypted_flip_inducing_char ^ target_char_decrypted
     replacement_byte = block_cipher_decryption_byte ^ ord(injection_char)
 
-    print(
-        f"Flip target character decrypted : {bytes([target_char_decrypted])}")
+    print(f"Flip target character decrypted : {bytes([target_char_decrypted])}")
     print(f"Flip inducing character         : {bytes([flip_inducing_char])}")
-    print(
-        f"Encrypted result character      : {bytes([encrypted_flip_inducing_char])}"
-    )
+    print(f"Encrypted result character      : {bytes([encrypted_flip_inducing_char])}")
     print(f"Replacement character           : {bytes([replacement_byte])}")
 
     # Inject replacement character into ciphertext.
@@ -160,6 +151,7 @@ def CBC_bit_flipper(
     return bytes(bit_flipped_ciphertext)
 
 
+@final
 class text_scorer:
     # http://cs.wellesley.edu/~fturbak/codman/letterfreq.html
     char_frequencies = [
@@ -196,12 +188,11 @@ class text_scorer:
     non_alphabet_chars = re.compile(b"[^a-zA-Z]+")
     desireable_chars = re.compile(b"""[\w\s,.'!-"\(\)\&%@#~-]""")
 
-    def __init__(self, byte_array):
+    def __init__(self, byte_array: bytes):
         self.byte_array = byte_array
         self.total_chars = len(byte_array)
 
     def score(self):
-
         # ---Prescreen---
         # Check for high letter proportion.
         letter_count = self.non_alphabet_chars.sub(b"", self.byte_array)
@@ -220,8 +211,7 @@ class text_scorer:
         # Count letter instances independent of case.
         case_independent_letters = Counter(letter_count.lower())
         case_independent_letter_count = [
-            case_independent_letters.get(char, 0)
-            for char in self.letter_ascii_index
+            case_independent_letters.get(char, 0) for char in self.letter_ascii_index
         ]
 
         # Normalise letter instances.
@@ -231,6 +221,8 @@ class text_scorer:
         ]
 
         # Return goodness of fit.
-        return chisquare(case_independent_letter_frequencies,
-                         self.expected_frequencies,
-                         sum_check=False)[1]
+        return chisquare(
+            case_independent_letter_frequencies,
+            self.expected_frequencies,
+            sum_check=False,
+        )[1]
