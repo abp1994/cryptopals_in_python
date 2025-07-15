@@ -10,17 +10,16 @@ from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 
 sys.path.append(str(Path(__file__).parent.resolve()))
 
-import byte_operations as bo
-import utils as ut
-from utils import decode, encode
+from . import byte_operations as bo
+from . import utils as ut
+from .utils import decode, encode
 
 
 class AESECB:
-
     def __init__(self, key):
-        self.cipher = Cipher(algorithms.AES(key),
-                             modes.ECB(),
-                             backend=default_backend())
+        self.cipher = Cipher(
+            algorithms.AES(key), modes.ECB(), backend=default_backend()
+        )
 
     def encrypt(self, plaintext):
         encryptor = self.cipher.encryptor()
@@ -32,7 +31,6 @@ class AESECB:
 
 
 class AESCBC:
-
     def __init__(self, iv, key):
         self.iv = iv
         self.key = key
@@ -50,8 +48,7 @@ class AESCBC:
     def decrypt(self, ciphertext):
         iv = self.iv
         output_message = b""
-        input_message = np.frombuffer(ciphertext,
-                                      dtype="uint8").reshape(-1, 16)
+        input_message = np.frombuffer(ciphertext, dtype="uint8").reshape(-1, 16)
         for block in input_message:
             step_1 = AESECB(self.key).decrypt(block)
             output_message = b"".join([output_message, bo.xor(iv, step_1)])
@@ -81,7 +78,8 @@ class AESCTR:
 
         # Remove xored bytes from keystream buffer.
         self.keystream_encryption_buffer = self.keystream_encryption_buffer[
-            plaintext_size:]
+            plaintext_size:
+        ]
 
         return ciphertext
 
@@ -96,7 +94,8 @@ class AESCTR:
 
         # Remove xored bytes from keystream buffer.
         self.keystream_decryption_buffer = self.keystream_decryption_buffer[
-            ciphertext_size:]
+            ciphertext_size:
+        ]
 
         return plaintext
 
@@ -120,22 +119,26 @@ class AESCTR:
             keystream = self.cipher.encrypt(concatenated_nonce_and_counter)
             if mode == "encryption":
                 self.keystream_encryption_buffer = b"".join(
-                    [self.keystream_encryption_buffer, keystream])
+                    [self.keystream_encryption_buffer, keystream]
+                )
             else:
                 self.keystream_decryption_buffer = b"".join(
-                    [self.keystream_decryption_buffer, keystream])
+                    [self.keystream_decryption_buffer, keystream]
+                )
 
 
 class C11:
-
     def __init__(self):
         self.mode = secrets.choice(["ECB", "CBC"])
         self.key = bo.random_AES_key()
         self.iv = secrets.token_bytes(16)
 
     def encrypt(self, data):
-        data = (secrets.token_bytes(secrets.randbelow(5)) + data +
-                secrets.token_bytes(secrets.randbelow(5)))
+        data = (
+            secrets.token_bytes(secrets.randbelow(5))
+            + data
+            + secrets.token_bytes(secrets.randbelow(5))
+        )
         data_padded = bo.pad(16, data)
         if self.mode == "ECB":
             result = AESECB(self.key).encrypt(data_padded)
@@ -145,7 +148,6 @@ class C11:
 
 
 class C12:
-
     def __init__(self):
         self.key = bo.random_AES_key()
         self.secret = b64decode(ut.import_data("data_S2C12.txt"))
@@ -156,7 +158,6 @@ class C12:
 
 
 class C13:
-
     @staticmethod
     def create_profile(email):
         data = C13.parse_profile(email)
@@ -182,7 +183,6 @@ class C13:
 
 
 class C14:
-
     def __init__(self):
         self.random_prefix = secrets.token_bytes(secrets.randbelow(64) + 1)
         self.oracle = C12()
@@ -193,7 +193,6 @@ class C14:
 
 
 class C16:
-
     def __init__(self):
         self.iv = bo.random_AES_key()
         self.key = bo.random_AES_key()
@@ -203,8 +202,7 @@ class C16:
     def encrypt(self, user_bytes):
         user_string = decode(user_bytes)
         clean_user_string = user_string.replace(";", '";"').replace("=", '"="')
-        byte_string = b"".join(
-            [self.prefix, encode(clean_user_string), self.suffix])
+        byte_string = b"".join([self.prefix, encode(clean_user_string), self.suffix])
         data = bo.pad(16, byte_string)
         return AESCBC(self.iv, self.key).encrypt(data)
 
@@ -218,14 +216,12 @@ class C16:
 
 
 class C17:
-
     def __init__(self):
         self.iv = bo.random_AES_key()
         self.key = bo.random_AES_key()
 
         file_name = "data_S3C17.txt"
-        self.data = b64decode(
-            random.choice(ut.import_data(file_name).splitlines()))
+        self.data = b64decode(random.choice(ut.import_data(file_name).splitlines()))
 
     def encrypt(self):
         data = bo.pad(16, self.data)
@@ -249,7 +245,6 @@ class C17:
 
 # Functions used to profile an encryption oracle.
 class Profiler:
-
     def __init__(self, oracle):
         self.oracle = oracle
         self.model_output = oracle.encrypt(b"")
@@ -280,7 +275,6 @@ class Profiler:
 
         # Loop while output size remains unchanged.
         while output_size == self.model_size:
-
             # Increase input length by one byte.
             bytestring = b"".join([bytestring, b"Z"])
             output_size = len(self.oracle.encrypt(bytestring))
@@ -304,20 +298,21 @@ class Profiler:
 
         bytestring = b""
         duplicate_found, duplicate_block_index = bo.detect_adjacent_duplicate_blocks(
-            self.oracle.encrypt(bytestring), block_size)
+            self.oracle.encrypt(bytestring), block_size
+        )
 
         while not (duplicate_found):
-
             bytestring = b"".join([bytestring, b"Z"])
             duplicate_found, duplicate_block_index = (
                 bo.detect_adjacent_duplicate_blocks(
-                    self.oracle.encrypt(bytestring), block_size))
+                    self.oracle.encrypt(bytestring), block_size
+                )
+            )
 
             if len(bytestring) > (3 * block_size):
                 raise StopIteration("Indeterminate input byte index")
 
         # The input byte index is found by counting backwards the number of bytes in the
         # input from the duplicate blocks' location in bytes.
-        input_byte_index = (
-            (duplicate_block_index + 1) * block_size) - len(bytestring)
+        input_byte_index = ((duplicate_block_index + 1) * block_size) - len(bytestring)
         return input_byte_index

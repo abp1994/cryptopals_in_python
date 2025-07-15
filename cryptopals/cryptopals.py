@@ -5,21 +5,21 @@ from pathlib import Path
 
 sys.path.append(str(Path(__file__).parent.resolve()))
 
-import byte_operations as bo
-import oracles as ocl
-import utils as ut
-from utils import decode, encode
+from . import byte_operations as bo
+from . import oracles as ocl
+from . import utils as ut
+from .utils import decode, encode
 
 
 class Set1:
-
     @staticmethod
     def challenge_1():
         print("\n-- Challenge 1 - Convert hex to base 64 --")
 
         plaintext_hex = (
             "49276d206b696c6c696e6720796f757220627261696e206c696b65"
-            "206120706f69736f6e6f7573206d757368726f6f6d")
+            "206120706f69736f6e6f7573206d757368726f6f6d"
+        )
         plaintext = bytes.fromhex(plaintext_hex)
         plaintext_b64 = b64encode(plaintext)
 
@@ -48,8 +48,8 @@ class Set1:
         print("\n-- Challenge 3 - Single-byte XOR cipher --")
 
         ciphertext_hex = (
-            "1b37373331363f78151b7f2b783431333d78397828372d363c7837"
-            "3e783a393b3736")
+            "1b37373331363f78151b7f2b783431333d78397828372d363c78373e783a393b3736"
+        )
         ciphertext = bytes.fromhex(ciphertext_hex)
         score, byte = bo.crack_single_byte_xor(ciphertext)
         plaintext = bo.single_byte_xor(byte, ciphertext)
@@ -87,8 +87,10 @@ class Set1:
     def challenge_5():
         print("\n-- Challenge 5 - Implement repeating-key XOR --")
 
-        plaintext = encode("Burning 'em, if you ain't quick and nimble\n"
-                           "I go crazy when I hear a cymbal")
+        plaintext = encode(
+            "Burning 'em, if you ain't quick and nimble\n"
+            "I go crazy when I hear a cymbal"
+        )
         key = encode("ICE")
         ciphertext = bo.repeating_key_xor(plaintext, key)
 
@@ -147,6 +149,7 @@ class Set1:
 
         ciphertext_hex = ut.import_data("data_S1C8.txt")
         # Find if data contains duplicate blocks.
+        line_index = None
         for line_index, line in enumerate(ciphertext_hex.splitlines()):
             if bo.is_ecb_encrypted(bytes.fromhex(line)):
                 break
@@ -156,7 +159,6 @@ class Set1:
 
 
 class Set2:
-
     @staticmethod
     def challenge_9():
         print("\n-- Challenge 9 - Implement PKCS#7 padding --")
@@ -165,8 +167,7 @@ class Set2:
         size = 20
         plaintext_padded = bo.pad(size, plaintext)
 
-        print(f"{plaintext} padded to {size} bytes using PKCS#7 : "
-              f"{plaintext_padded}")
+        print(f"{plaintext} padded to {size} bytes using PKCS#7 : {plaintext_padded}")
         return plaintext_padded
 
     @staticmethod
@@ -218,8 +219,7 @@ class Set2:
 
     @staticmethod
     def challenge_12():
-        print("\n-- Challenge 12 -"
-              "Byte-at-a-time ECB decryption (Simple) --")
+        print("\n-- Challenge 12 -Byte-at-a-time ECB decryption (Simple) --")
 
         oracle = ocl.C12()
         profile = ocl.Profiler(oracle)
@@ -232,8 +232,7 @@ class Set2:
         print(f"Detected initial pad size  : {profile.initial_pad_size}")
 
         decryption = b""
-        data_size_in_blocks = int(
-            len(oracle.encrypt(b"")) / profile.block_size)
+        data_size_in_blocks = int(len(oracle.encrypt(b"")) / profile.block_size)
 
         # For all blocks in the data.
         for block_index in range(data_size_in_blocks):
@@ -243,16 +242,20 @@ class Set2:
             # For all byte positions along the block (15->0).
             for byte_index in reversed(range(profile.block_size)):
                 buffer = b"Z" * byte_index + decryption
-                model_block = oracle.encrypt(
-                    b"Z" *
-                    (byte_index))[block_start_byte_index:block_end_byte_index]
+                model_block = oracle.encrypt(b"Z" * (byte_index))[
+                    block_start_byte_index:block_end_byte_index
+                ]
 
                 # Test all possible characters against model_block.
                 for char in range(256):
                     byte = bytes([char])
                     # If character matched add it to the decryption.
-                    if (model_block == oracle.encrypt(buffer + byte)
-                        [block_start_byte_index:block_end_byte_index]):
+                    if (
+                        model_block
+                        == oracle.encrypt(buffer + byte)[
+                            block_start_byte_index:block_end_byte_index
+                        ]
+                    ):
                         decryption = b"".join([decryption, byte])
                         break
         plaintext = bo.depad(decryption)
@@ -351,10 +354,8 @@ class Set2:
         print(f"new ending decrypted         : {decrypted_cut}")
 
         attacker_encrypted_profile = crop + cut
-        attacker_decrypted_profile = oracle.decrypt_profile(
-            attacker_encrypted_profile)
-        attacker_profile = oracle.unpack_profile(
-            bo.depad(attacker_decrypted_profile))
+        attacker_decrypted_profile = oracle.decrypt_profile(attacker_encrypted_profile)
+        attacker_profile = oracle.unpack_profile(bo.depad(attacker_decrypted_profile))
 
         print(f"Attacker encrypted profile   : {attacker_encrypted_profile}")
         print(f"Attacker decrypted profile   : {attacker_decrypted_profile}")
@@ -377,23 +378,24 @@ class Set2:
 
         # Create an input that fills the current block
         # by using 1 to block_size bytes.
-        bytes_to_add = profile.block_size - (profile.input_byte_index %
-                                             profile.block_size)
+        bytes_to_add = profile.block_size - (
+            profile.input_byte_index % profile.block_size
+        )
         block_end_input = b"Z" * bytes_to_add
 
         print(f"Bytes to add               : {bytes_to_add}")
         print(f"Input ending block         : {block_end_input}")
 
         decryption = b""
-        data_size_in_blocks = int(
-            len(oracle.encrypt(b"")) / profile.block_size)
+        data_size_in_blocks = int(len(oracle.encrypt(b"")) / profile.block_size)
 
         print(f"Size of output             : {profile.model_size}")
         print(f"Size of output in blocks   : {data_size_in_blocks}")
 
         # For all blocks in the data after the prefix blocks.
-        for block_index in range(profile.input_block_index + 1,
-                                 data_size_in_blocks + 1):
+        for block_index in range(
+            profile.input_block_index + 1, data_size_in_blocks + 1
+        ):
             block_start_byte_index = block_index * profile.block_size
             block_end_byte_index = block_start_byte_index + profile.block_size
 
@@ -408,8 +410,12 @@ class Set2:
                 for char in range(256):
                     byte = bytes([char])
                     # If character matched add it to the decryption.
-                    if (model_block == oracle.encrypt(buffer + byte)
-                        [block_start_byte_index:block_end_byte_index]):
+                    if (
+                        model_block
+                        == oracle.encrypt(buffer + byte)[
+                            block_start_byte_index:block_end_byte_index
+                        ]
+                    ):
                         decryption = b"".join([decryption, byte])
                         break
 
@@ -453,10 +459,9 @@ class Set2:
         ciphertext = oracle.encrypt(crack_input)
 
         # Bit flip desired characters at desired index.
-        bit_flipped_ciphertext_1 = bo.CBC_bit_flipper(known_prefix,
-                                                      crack_input, ciphertext,
-                                                      profile.block_size, 0,
-                                                      ";")
+        bit_flipped_ciphertext_1 = bo.CBC_bit_flipper(
+            known_prefix, crack_input, ciphertext, profile.block_size, 0, ";"
+        )
 
         bit_flipped_ciphertext_2 = bo.CBC_bit_flipper(
             known_prefix,
@@ -469,14 +474,11 @@ class Set2:
 
         # Check decryption.
         print(f"Decrypted data : \n{oracle.decrypt(bit_flipped_ciphertext_2)}")
-        print(
-            f"Admin property present : {oracle.is_admin(bit_flipped_ciphertext_2)}"
-        )
+        print(f"Admin property present : {oracle.is_admin(bit_flipped_ciphertext_2)}")
         return oracle.is_admin(bit_flipped_ciphertext_2)
 
 
 class Set3:
-
     @staticmethod
     def challenge_17():
         print("\n-- Challenge 17 - The CBC padding oracle --")
@@ -508,19 +510,19 @@ class Set3:
         # a bit is then flipped and depading is rerun to check that the padding is of a known value.
         def single_byte_pad_crack(ciphertext, iv, index, expected_pad):
             crack_ciphertext = bytearray(ciphertext)
-
+            byte = None
             for byte in range(255):
                 crack_ciphertext[index] = byte
 
                 if oracle.depad_possible(crack_ciphertext, iv):
-
                     # Check padding is of correct size by flipping a bit that should not affect the pad.
                     # Only required if expected pad is 1.
                     if expected_pad == 1:
                         check_crack_ciphertext = crack_ciphertext[:]
                         # Flip single bit by XORing with 1.
                         check_crack_ciphertext[index - expected_pad] = (
-                            check_crack_ciphertext[index - expected_pad] ^ 1)
+                            check_crack_ciphertext[index - expected_pad] ^ 1
+                        )
                         # Check depad still possible.
                         if oracle.depad_possible(check_crack_ciphertext, iv):
                             break
@@ -538,8 +540,10 @@ class Set3:
             block_array.insert(0, iv)
 
             # Create block pairs for processing.
-            block_pairs = [(block_array[i], block_array[i + 1])
-                           for i in (range(len(block_array) - 1))]
+            block_pairs = [
+                (block_array[i], block_array[i + 1])
+                for i in (range(len(block_array) - 1))
+            ]
 
             for penultimate_block, end_block in reversed(block_pairs):
                 decryption = b""
@@ -552,31 +556,36 @@ class Set3:
 
                     # Find the valid pad byte.
                     valid_pad_byte = single_byte_pad_crack(
-                        crack_ciphertext, iv, byte_index, expected_pad)
+                        crack_ciphertext, iv, byte_index, expected_pad
+                    )
 
                     # Find the plaintext byte using the valid pad byte.
-                    decrypted_byte = (expected_pad
-                                      ^ penultimate_block[byte_index]
-                                      ^ valid_pad_byte)
+                    decrypted_byte = (
+                        expected_pad ^ penultimate_block[byte_index] ^ valid_pad_byte
+                    )
 
                     # Prepend decrypted byte to decryption.
-                    decryption = b"".join(
-                        [bytes([decrypted_byte]), decryption])
+                    decryption = b"".join([bytes([decrypted_byte]), decryption])
 
                     # Update crack block by setting all unknown pad bytes to bytes that create expected pad when decrypted.
-                    for index in range(block_size - 1,
-                                       block_size - expected_pad - 1, -1):
+                    for index in range(
+                        block_size - 1, block_size - expected_pad - 1, -1
+                    ):
                         crack_block_prefix = crack_block[:index]
-                        crack_block_suffix = crack_block[index + 1:]
-                        new_crack_byte = (penultimate_block[index]
-                                          ^ decryption[-(block_size - index)]
-                                          ^ expected_pad + 1)
+                        crack_block_suffix = crack_block[index + 1 :]
+                        new_crack_byte = (
+                            penultimate_block[index]
+                            ^ decryption[-(block_size - index)]
+                            ^ expected_pad + 1
+                        )
 
-                        crack_block = b"".join([
-                            crack_block_prefix,
-                            bytes([new_crack_byte]),
-                            crack_block_suffix,
-                        ])
+                        crack_block = b"".join(
+                            [
+                                crack_block_prefix,
+                                bytes([new_crack_byte]),
+                                crack_block_suffix,
+                            ]
+                        )
 
                 # Update plaintext by prepending decrypted block.
                 plaintext = b"".join([decryption, plaintext])
@@ -594,6 +603,7 @@ class Set3:
             print("XXXXXXXXXXXXXXXXFailureXXXXXXXXXXXXXXXX")
             raise Exception("C17 Failed")
 
+    @staticmethod
     def challenge_18():
         print("\n-- Challenge 18 - Implement CTR, the stream cipher mode --")
         ciphertext = b64decode(
@@ -635,30 +645,29 @@ class Set3:
 
 
 def run_challenges():
-
     # Set 1.
-    Set1.challenge_1()
-    Set1.challenge_2()
-    Set1.challenge_3()
-    Set1.challenge_4()
-    Set1.challenge_5()
-    Set1.challenge_6()
-    Set1.challenge_7()
-    Set1.challenge_8()
+    _ = Set1.challenge_1()
+    _ = Set1.challenge_2()
+    _ = Set1.challenge_3()
+    _ = Set1.challenge_4()
+    _ = Set1.challenge_5()
+    _ = Set1.challenge_6()
+    _ = Set1.challenge_7()
+    _ = Set1.challenge_8()
 
     # Set 2.
-    Set2.challenge_9()
-    Set2.challenge_10()
-    Set2.challenge_11()
-    Set2.challenge_12()
-    Set2.challenge_13()
-    Set2.challenge_14()
-    Set2.challenge_15()
-    Set2.challenge_16()
+    _ = Set2.challenge_9()
+    _ = Set2.challenge_10()
+    _ = Set2.challenge_11()
+    _ = Set2.challenge_12()
+    _ = Set2.challenge_13()
+    _ = Set2.challenge_14()
+    _ = Set2.challenge_15()
+    _ = Set2.challenge_16()
 
     # Set 3.
-    Set3.challenge_17()
-    Set3.challenge_18()
+    _ = Set3.challenge_17()
+    _ = Set3.challenge_18()
 
 
 def main():

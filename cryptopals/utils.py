@@ -4,7 +4,7 @@ import pstats
 import sys
 from pathlib import Path
 
-import utils as ut
+from . import utils as ut
 
 
 def enable_print():
@@ -15,7 +15,7 @@ def disable_print():
     sys.stdout = open(os.devnull, "w")
 
 
-def import_data(file_name):
+def import_data(file_name: str):
     file_path = str(Path(__file__).parent.resolve() / "data/" / file_name)
     with open(file_path) as f:
         return f.read()
@@ -35,4 +35,4 @@ def function_stats(function):
     profile.run(function)
     ut.enable_print()
     ps = pstats.Stats(profile)
-    ps.print_stats()
+    _ = ps.print_stats()
