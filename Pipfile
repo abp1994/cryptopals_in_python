@@ -9,6 +9,8 @@ numpy = "*"
 cryptography = "*"
 
 [dev-packages]
+scipy-stubs = "*"
+
 
 [requires]
 python_version = "3.13"
