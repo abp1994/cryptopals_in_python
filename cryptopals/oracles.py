@@ -257,6 +257,7 @@ class C17:
 
 
 # Functions used to profile an encryption oracle.
+@final
 class Profiler:
     def __init__(self, oracle):
         self.oracle = oracle
