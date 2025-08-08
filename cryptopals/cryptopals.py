@@ -13,7 +13,7 @@ from .utils import decode, encode
 
 class Set1:
     @staticmethod
-    def challenge_1():
+    def challenge_1() -> bytes:
         print("\n-- Challenge 1 - Convert hex to base 64 --")
 
         plaintext_hex = (
@@ -29,7 +29,7 @@ class Set1:
         return plaintext_b64
 
     @staticmethod
-    def challenge_2():
+    def challenge_2() -> str:
         print("\n-- Challenge 2 - Fixed XOR --")
 
         ciphertext_hex = "1c0111001f010100061a024b53535009181c"
@@ -44,7 +44,7 @@ class Set1:
         return plaintext.hex()
 
     @staticmethod
-    def challenge_3():
+    def challenge_3() -> str:
         print("\n-- Challenge 3 - Single-byte XOR cipher --")
 
         ciphertext_hex = (
@@ -61,7 +61,7 @@ class Set1:
         return decode(plaintext)
 
     @staticmethod
-    def challenge_4():
+    def challenge_4() -> str:
         print("\n-- Challenge 4 - Detect single-char XOR --")
 
         file_name = "data_S1C4.txt"
@@ -84,7 +84,7 @@ class Set1:
         return decode(plaintext)
 
     @staticmethod
-    def challenge_5():
+    def challenge_5() -> str:
         print("\n-- Challenge 5 - Implement repeating-key XOR --")
 
         plaintext = encode(
@@ -99,7 +99,7 @@ class Set1:
         return ciphertext.hex()
 
     @staticmethod
-    def challenge_6():
+    def challenge_6() -> str:
         print("\n-- Challenge 6 - Break repeating-key XOR --")
         print("-- Part 1 --")
 
@@ -132,7 +132,7 @@ class Set1:
         return decode(secret)
 
     @staticmethod
-    def challenge_7():
+    def challenge_7() -> None:
         print("\n-- Challenge 7 - AES in ECB mode --")
 
         key = encode("YELLOW SUBMARINE")
@@ -143,7 +143,7 @@ class Set1:
         print(f"Plaintext : \n{decode(plaintext[:90])}...")
 
     @staticmethod
-    def challenge_8():
+    def challenge_8() -> int | None:
         print("\n-- Challenge 8 - Detect AES in ECB mode --")
 
         ciphertext_hex = ut.import_data("data_S1C8.txt")
@@ -159,7 +159,7 @@ class Set1:
 
 class Set2:
     @staticmethod
-    def challenge_9():
+    def challenge_9() -> bytes:
         print("\n-- Challenge 9 - Implement PKCS#7 padding --")
 
         plaintext = encode("YELLOW SUBMARINE")
@@ -170,7 +170,7 @@ class Set2:
         return plaintext_padded
 
     @staticmethod
-    def challenge_10():
+    def challenge_10() -> str:
         print("\n-- Challenge 10 - Implement CBC mode --")
 
         plaintext_padded = bo.pad(16, b"This is a secret message! TOP SECRET")
@@ -203,7 +203,7 @@ class Set2:
         return decode(plaintext)
 
     @staticmethod
-    def challenge_11():
+    def challenge_11() -> tuple[list[str], list[str]]:
         print("\n-- Challenge 11 - An ECB/CBC detection oracle --")
 
         # Create and profile 5 oracles.
@@ -217,7 +217,7 @@ class Set2:
         return oracle_modes, detected_modes
 
     @staticmethod
-    def challenge_12():
+    def challenge_12() -> str:
         print("\n-- Challenge 12 -Byte-at-a-time ECB decryption (Simple) --")
 
         oracle = ocl.C12()
@@ -262,7 +262,7 @@ class Set2:
         return decode(plaintext)
 
     @staticmethod
-    def challenge_13():
+    def challenge_13() -> dict[str, str]:
         print("\n-- Challenge 13 - ECB cut-and-paste --")
         print("-- Part 1 --")
 
@@ -362,7 +362,7 @@ class Set2:
         return attacker_profile
 
     @staticmethod
-    def challenge_14():
+    def challenge_14() -> str:
         print("\n-- Challenge 14 - Byte-at-a-time ECB decryption (Harder) --")
 
         oracle = ocl.C14()
@@ -423,7 +423,7 @@ class Set2:
         return decode(plaintext)
 
     @staticmethod
-    def challenge_15():
+    def challenge_15() -> None:
         print("\n-- Challenge 15 - PKCS#7 padding validation --")
 
         a = b"ICE ICE BABY\x04\x04\x04\x04"
@@ -437,7 +437,7 @@ class Set2:
                 print(f"Depad of {padded_text} : {e}")
 
     @staticmethod
-    def challenge_16():
+    def challenge_16() -> bool:
         print("\n-- Challenge 16 - CBC bitflipping attacks --")
 
         oracle = ocl.C16()

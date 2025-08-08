@@ -7,7 +7,7 @@ import numpy as np
 from scipy.stats import chisquare
 
 
-def xor(a: bytes, b: bytes):
+def xor(a: bytes, b: bytes) -> bytes:
     return bytes(a_byte ^ b_byte for a_byte, b_byte in zip(a, b))
 
 
@@ -16,7 +16,7 @@ def edit_distance(a: bytes, b: bytes):
     return sum([bin(byte).count("1") for byte in xor(a, b)])
 
 
-def single_byte_xor(byte: bytes, byte_array: bytes):
+def single_byte_xor(byte: bytes, byte_array: bytes) -> bytes:
     return xor(byte_array, byte * len(byte_array))
 
 
@@ -30,8 +30,8 @@ def crack_single_byte_xor(ciphertext: bytes):
     return max(attempt_crack())
 
 
-def repeating_key_xor(ciphertext: bytes, key: bytes):
-    def nth_xor(n, byte: bytes):
+def repeating_key_xor(ciphertext: bytes, key: bytes) -> bytes:
+    def nth_xor(n: int, byte: bytes) -> bytes:
         return byte ^ key[n % len(key)]
 
     return bytes([nth_xor(n, byte) for n, byte in enumerate(ciphertext)])
@@ -56,7 +56,7 @@ def find_key_size(max_size: int, data: bytes):
     return [row[1] for row in sorted(results)]
 
 
-def key_finder(key_size: int, data: bytes):
+def key_finder(key_size: int, data: bytes) -> bytes:
     # Create list of rectangular size using key_size.
     lower_multiple = len(data) - (len(data) % key_size)
     data_array = np.frombuffer(data, dtype="uint8")[0:lower_multiple]
@@ -69,7 +69,7 @@ def key_finder(key_size: int, data: bytes):
     return b"".join([crack_single_byte_xor(item)[1] for item in output_list])
 
 
-def pad(block_size: int, data: bytes):
+def pad(block_size: int, data: bytes) -> bytes:
     # PKCS#7 padding.
     if (len(data) % block_size) == 0:
         data = b"".join([data, bytes([block_size]) * block_size])
@@ -79,7 +79,7 @@ def pad(block_size: int, data: bytes):
     return data
 
 
-def depad(data: bytes):
+def depad(data: bytes) -> bytes:
     # PKCS#7 depadding.
     pad_size = data[-1]
     if data[-pad_size:] != bytes([pad_size]) * pad_size:
@@ -97,7 +97,7 @@ def random_AES_key():
     return secrets.token_bytes(16)
 
 
-def is_ecb_encrypted(data: bytes):
+def is_ecb_encrypted(data: bytes) -> bool:
     array = np.frombuffer(data, dtype="uint8").reshape(-1, 16)
     duplicate_blocks = len(array) - len(np.unique(array, axis=0))
     return True if 0 < duplicate_blocks else False
@@ -123,7 +123,7 @@ def CBC_bit_flipper(
     block_size: int,
     target_char_index: int,
     injection_char: str,
-):
+) -> bytes:
     prefix_bytes_length = len(prefix_bytes)
 
     # Target character properties.
