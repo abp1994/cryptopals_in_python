@@ -3,7 +3,7 @@ import secrets
 import sys
 from base64 import b64decode
 from pathlib import Path
-from typing import final
+from typing import Literal, final
 
 import numpy as np
 from cryptography.hazmat.backends import default_backend
@@ -18,16 +18,16 @@ from .utils import decode, encode
 
 @final
 class AESECB:
-    def __init__(self, key: bytes):
+    def __init__(self, key: bytes) -> None:
         self.cipher = Cipher(
             algorithms.AES(key), modes.ECB(), backend=default_backend()
         )
 
-    def encrypt(self, plaintext: bytes):
+    def encrypt(self, plaintext: bytes) -> bytes:
         encryptor = self.cipher.encryptor()
         return encryptor.update(plaintext) + encryptor.finalize()
 
-    def decrypt(self, ciphertext: bytes):
+    def decrypt(self, ciphertext: bytes) -> bytes:
         decryptor = self.cipher.decryptor()
         return decryptor.update(ciphertext)
 
@@ -38,11 +38,11 @@ class AESCBC:
         self,
         iv: bytes,
         key: bytes,
-    ):
+    ) -> None:
         self.iv = iv
         self.key = key
 
-    def encrypt(self, plaintext: bytes):
+    def encrypt(self, plaintext: bytes) -> bytes:
         iv = self.iv
         output_message = b""
         input_message = np.frombuffer(plaintext, dtype="uint8").reshape(-1, 16)
@@ -52,7 +52,7 @@ class AESCBC:
             output_message = b"".join([output_message, iv])
         return output_message
 
-    def decrypt(self, ciphertext: bytes):
+    def decrypt(self, ciphertext: bytes) -> bytes:
         iv = self.iv
         output_message = b""
         input_message = np.frombuffer(ciphertext, dtype="uint8").reshape(-1, 16)
@@ -66,7 +66,7 @@ class AESCBC:
 @final
 class AESCTR:
     # Encryption/decryption using small endian nonce + counter
-    def __init__(self, nonce: bytes, key: bytes):
+    def __init__(self, nonce: bytes, key: bytes) -> None:
         self.nonce = nonce
         self.key = key
         self.encryption_counter = 0
@@ -75,7 +75,7 @@ class AESCTR:
         self.keystream_encryption_buffer = b""
         self.keystream_decryption_buffer = b""
 
-    def encrypt(self, plaintext: bytes):
+    def encrypt(self, plaintext: bytes) -> bytes:
         plaintext_size = len(plaintext)
         # Generate keystream so buffer is larger than size of plaintext.
         self.generate_keystream_buffer(plaintext_size, "encryption")
@@ -91,7 +91,7 @@ class AESCTR:
 
         return ciphertext
 
-    def decrypt(self, ciphertext: bytes):
+    def decrypt(self, ciphertext: bytes) -> bytes:
         ciphertext_size = len(ciphertext)
         # Generate keystream so buffer is larger than size of ciphertext.
         self.generate_keystream_buffer(ciphertext_size, "decryption")
@@ -107,7 +107,7 @@ class AESCTR:
 
         return plaintext
 
-    def generate_keystream_buffer(self, desired_size: int, mode: str):
+    def generate_keystream_buffer(self, desired_size: int, mode: str) -> None:
         if mode == "encryption":
             buffer_size = len(self.keystream_encryption_buffer)
         else:
@@ -137,12 +137,12 @@ class AESCTR:
 
 @final
 class C11:
-    def __init__(self):
+    def __init__(self) -> None:
         self.mode = secrets.choice(["ECB", "CBC"])
         self.key = bo.random_AES_key()
         self.iv = secrets.token_bytes(16)
 
-    def encrypt(self, data: bytes):
+    def encrypt(self, data: bytes) -> bytes:
         data = (
             secrets.token_bytes(secrets.randbelow(5))
             + data
@@ -158,34 +158,34 @@ class C11:
 
 @final
 class C12:
-    def __init__(self):
+    def __init__(self) -> None:
         self.key = bo.random_AES_key()
         self.secret = b64decode(ut.import_data("data_S2C12.txt"))
 
-    def encrypt(self, prefix: bytes):
+    def encrypt(self, prefix: bytes) -> bytes:
         data = bo.pad(16, prefix + self.secret)
         return AESECB(self.key).encrypt(data)
 
 
 class C13:
     @staticmethod
-    def create_profile(email: str):
+    def create_profile(email: str) -> bytes:
         data = C13.parse_profile(email)
         padded_data = bo.pad(16, data)
         return AESECB(b"PASSWORDPASSWORD").encrypt(padded_data)
 
     @staticmethod
-    def parse_profile(email: str):
+    def parse_profile(email: str) -> bytes:
         if 0 < sum(map(email.count, ("=", "&"))):
             raise Exception("Invalid character encountered")
         return encode(f"email={email}&uid=10&role=user")
 
     @staticmethod
-    def decrypt_profile(data: bytes):
+    def decrypt_profile(data: bytes) -> bytes:
         return AESECB(b"PASSWORDPASSWORD").decrypt(data)
 
     @staticmethod
-    def unpack_profile(data: bytes):
+    def unpack_profile(data: bytes) -> dict[str, str]:
         return {
             decode(key): decode(value)
             for key, value in (line.split(b"=") for line in data.split(b"&"))
@@ -194,24 +194,24 @@ class C13:
 
 @final
 class C14:
-    def __init__(self):
+    def __init__(self) -> None:
         self.random_prefix = secrets.token_bytes(secrets.randbelow(64) + 1)
         self.oracle = C12()
 
-    def encrypt(self, user_bytes: bytes):
+    def encrypt(self, user_bytes: bytes) -> bytes:
         combination = b"".join([self.random_prefix, user_bytes])
         return self.oracle.encrypt(combination)
 
 
 @final
 class C16:
-    def __init__(self):
+    def __init__(self) -> None:
         self.iv = bo.random_AES_key()
         self.key = bo.random_AES_key()
         self.prefix = b"comment1=cooking%20MCs;userdata="
         self.suffix = b";comment2=%20like%20a%20pound%20of%20bacon"
 
-    def encrypt(self, user_bytes: bytes):
+    def encrypt(self, user_bytes: bytes) -> bytes:
         user_string = decode(user_bytes)
         clean_user_string = user_string.replace(";", '";"').replace("=", '"="')
         byte_string = b"".join([self.prefix, encode(clean_user_string), self.suffix])
@@ -222,26 +222,26 @@ class C16:
         data = decode(AESCBC(self.iv, self.key).decrypt(bytes))
         return [tuple(pair.split("=", 1)) for pair in data.split(";")]
 
-    def is_admin(self, bytes: bytes):
+    def is_admin(self, bytes: bytes) -> bool:
         decrypted_fields = self.decrypt(bytes)
         return ("admin", "true") in decrypted_fields
 
 
 @final
 class C17:
-    def __init__(self):
+    def __init__(self) -> None:
         self.iv = bo.random_AES_key()
         self.key = bo.random_AES_key()
 
         file_name = "data_S3C17.txt"
         self.data = b64decode(random.choice(ut.import_data(file_name).splitlines()))
 
-    def encrypt(self):
+    def encrypt(self) -> tuple[bytes, bytes]:
         data = bo.pad(16, self.data)
         ciphertext = AESCBC(self.iv, self.key).encrypt(data)
         return ciphertext, self.iv
 
-    def depad_possible(self, bytes: bytes, iv: bytes):
+    def depad_possible(self, bytes: bytes, iv: bytes) -> bool:
         data = AESCBC(iv, self.key).decrypt(bytes)
         # Try depadding data catch error.
         try:
@@ -252,14 +252,14 @@ class C17:
 
         return outcome
 
-    def reveal(self):
+    def reveal(self) -> bytes:
         return bo.pad(16, self.data)
 
 
 # Functions used to profile an encryption oracle.
 @final
 class Profiler:
-    def __init__(self, oracle):
+    def __init__(self, oracle) -> None:
         self.oracle = oracle
         self.model_output = oracle.encrypt(b"")
         self.model_size = len(self.model_output)
@@ -273,13 +273,13 @@ class Profiler:
             self.input_byte_index = None
             self.input_block_index = None
 
-    def mode_check(self):
+    def mode_check(self) -> Literal["ECB", "Not ECB"]:
         data = self.oracle.encrypt(b"Z" * 50)
         blocks = np.frombuffer(data, dtype="uint8").reshape(-1, 16)
         duplicate_blocks = len(blocks) - len(np.unique(blocks, axis=0))
         return "ECB" if 0 < duplicate_blocks else "Not ECB"
 
-    def find_block_size(self):
+    def find_block_size(self) -> tuple[int, int]:
         # Encrypt increasingly long byte strings using the oracle until
         # output changes size. Return change in size of output.
 
@@ -305,7 +305,7 @@ class Profiler:
 
         return block_size, initial_pad_size
 
-    def find_input_byte_index(self, block_size: int):
+    def find_input_byte_index(self, block_size: int) -> int:
         # Encrypt increasingly long byte strings using the oracle until
         # 2 identical blocks are found in the output next to each other.
         # Return the index of the block that matches with a previous block.

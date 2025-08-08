@@ -29,10 +29,10 @@ def decode(byte_array: bytes):
     return byte_array.decode("utf-8", errors="ignore")
 
 
-def function_stats(function):
+def function_stats(function: str):
     profile = cProfile.Profile()
     ut.disable_print()
-    profile.run(function)
+    _ = profile.run(function)
     ut.enable_print()
     ps = pstats.Stats(profile)
     _ = ps.print_stats()
