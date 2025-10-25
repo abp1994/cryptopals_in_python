@@ -31,10 +31,10 @@ def crack_single_byte_xor(ciphertext: bytes):
 
 
 def repeating_key_xor(ciphertext: bytes, key: bytes) -> bytes:
-    def nth_xor(n: int, byte: bytes) -> bytes:
-        return byte ^ key[n % len(key)]
+    def nth_xor(n: int, byte_val: int) -> int:
+        return byte_val ^ key[n % len(key)]
 
-    return bytes([nth_xor(n, byte) for n, byte in enumerate(ciphertext)])
+    return bytes([nth_xor(n, byte_val) for n, byte_val in enumerate(ciphertext)])
 
 
 def find_key_size(max_size: int, data: bytes):
