@@ -508,7 +508,7 @@ class Set3:
         # Function that submits all possible values for specific byte index in a ciphertext and returns byte that oracle is able to depad.
         # a bit is then flipped and depading is rerun to check that the padding is of a known value.
         def single_byte_pad_crack(
-            ciphertext: bytes, iv: bytes, index: int, expected_pad
+            ciphertext: bytes, iv: bytes, index: int, expected_pad: int
         ):
             crack_ciphertext = bytearray(ciphertext)
             byte = None
