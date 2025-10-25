@@ -1,7 +1,7 @@
-cffi==1.17.1
-cryptography==45.0.6
-numpy==2.3.2
+cffi==2.0.0
+cryptography==46.0.3
+numpy==2.3.4
 optype==0.11.0
-pycparser==2.22
-scipy==1.16.1
+pycparser==2.23
+scipy==1.16.2
 scipy-stubs==1.16.0.2
